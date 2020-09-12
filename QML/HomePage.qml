@@ -10,7 +10,7 @@ Item {
         id: playButton
         anchors.verticalCenter: homePage.verticalCenter
         anchors.horizontalCenter: homePage.horizontalCenter
-        text: "Play"
+        text: "Play local"
 
         onClicked: homePage.playClicked()
     }
