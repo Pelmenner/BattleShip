@@ -5,7 +5,7 @@ Item {
     id: homePage
 
     signal playClicked()
-    signal playLoclaClicked()
+    signal playLocalClicked()
 
     Column{
          anchors.verticalCenter: homePage.verticalCenter
