@@ -48,7 +48,7 @@ Item {
         width: namesInput.landscape ? namesInput.width / 1.5 : namesInput.width - 10
         height: namesInput.height / 16
 
-        color: Material.background
+        color: Qt.lighter(Material.background)
 
         radius: 10
         border{
@@ -82,7 +82,7 @@ Item {
         width: namesInput.landscape ? namesInput.width / 1.5 : namesInput.width - 10
         height: namesInput.height / 16
 
-        color: Material.background
+        color: Qt.lighter(Material.background)
 
         radius: 10
         border{
