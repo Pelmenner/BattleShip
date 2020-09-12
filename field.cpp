@@ -1,0 +1,350 @@
+#include "field.h"
+
+#include <QColor>
+#include <QTime>
+#include <QPropertyAnimation>
+
+Field::Field(QObject *parent) : QObject(parent), filled(false)
+{    
+    count_ships.resize(4);
+    cells.fill(QVector<Cell*>(10), 10);
+    cellStates.fill(QVector<Cell::CellState>(10, Cell::CellState::Unknown), 10);
+
+    for (int i = 0; i < 10; ++i)
+        for (int j = 0; j < 10; ++j)
+            cells[i][j] = new Cell(this, i, j);
+}
+
+Field::Field(const Field &f): cells(f.cells), cellStates(f.cellStates),
+    count_ships(f.count_ships), name(f.name), filled(f.filled){}
+
+Cell *Field::getCell(int x, int y)
+{
+    return cells[x][y];
+}
+
+int Field::checkHit(const QPoint& position) const
+{
+    for (int i = 0; i < ships.size(); ++i)
+    {
+        if (ships[i].direction == ship::Direction::vertical)
+        {
+            if (position.y() != ships[i].pos.y())
+                continue;
+            if (position.x() < ships[i].pos.x() || position.x() >= ships[i].pos.x() + ships[i].length)
+                continue;
+
+            return i;
+        }
+        else
+        {
+            if (position.x() != ships[i].pos.x())
+                continue;
+            if (position.y() < ships[i].pos.y() || position.y() >= ships[i].pos.y() + ships[i].length)
+                continue;
+
+            return i;
+        }
+    }
+    return -1;
+}
+
+void Field::showAndSurroundKilled(int index)
+{
+    QPoint start = ships[index].pos;
+    QPoint end;
+    end.rx() = start.x() + ((static_cast<int>(ships[index].direction) + 1) % 2) * ships[index].length;
+    end.ry() = start.y() + static_cast<int>(ships[index].direction) * ships[index].length;
+
+    QPoint curPos = start;
+    QVector <QPoint> currCells;
+    while (curPos != end)
+    {
+        changeCellState(curPos, Cell::CellState::Hit);
+        getNeighbours(curPos, currCells);
+        curPos.rx() += (static_cast<int>(ships[index].direction) + 1) % 2;
+        curPos.ry() += static_cast<int>(ships[index].direction) % 2;
+    }
+
+    for (auto coordinates : currCells)
+        if (cellStates[coordinates.x()][coordinates.y()] == Cell::CellState::Unknown)
+            changeCellState(coordinates, Cell::CellState::AutoChecked);
+}
+
+void Field::getNeighbours(QPoint pos, QVector<QPoint> &ans)
+{
+    if (pos.x() > 0 && pos.y() > 0)
+        ans.push_back({ pos.x() - 1, pos.y() - 1 });
+    if (pos.x() > 0)
+        ans.push_back({ pos.x() - 1, pos.y() });
+    if (pos.x() > 0 && pos.y() < 9)
+        ans.push_back({ pos.x() - 1, pos.y() + 1 });
+    if (pos.y() > 0)
+        ans.push_back({ pos.x(), pos.y() - 1 });
+    if (pos.y() > 0 && pos.x() < 9)
+        ans.push_back({ pos.x() + 1, pos.y() - 1 });
+    if (pos.x() < 9 && pos.y() < 9)
+        ans.push_back({ pos.x() + 1, pos.y() + 1 });
+    if (pos.x() < 9)
+        ans.push_back({ pos.x() + 1, pos.y() });
+    if (pos.y() < 9)
+        ans.push_back({ pos.x(), pos.y() + 1 });
+}
+
+int Field::getTotalHealth()
+{
+    int totalHealth = 0;
+    for (auto& ship : ships)
+        totalHealth += ship.health;
+    return totalHealth;
+}
+
+bool Field::erase(QPoint pos)
+{
+    bool found = false;
+    for (int i = 0; i < ships.size(); ++i)
+    {
+        if (ships[i].direction == ship::Direction::vertical)
+        {
+            if (pos.y() != ships[i].pos.y())
+                continue;
+            if (pos.x() < ships[i].pos.x() || pos.x() > ships[i].pos.x() + ships[i].length - 1)
+                continue;
+
+            count_ships[ships[i].length - 1]--;
+            ships.erase(ships.begin() + i);
+            found = true;
+            break;
+        }
+        else
+        {
+            if (pos.x() != ships[i].pos.x())
+                continue;
+            if (pos.y() < ships[i].pos.y() || pos.y() > ships[i].pos.y() + ships[i].length - 1)
+                continue;
+
+            count_ships[ships[i].length - 1]--;
+            ships.erase(ships.begin() + i);
+            found = true;
+            break;
+        }
+    }
+    updateCells();
+    emit shipCountChanged();
+    return found;
+}
+
+void Field::clearCells()
+{
+    for (int i = 0; i < 10; ++i)
+        for (int j = 0; j < 10; ++j)
+            changeCellState(i, j, Cell::CellState::Unknown);
+}
+
+void Field::setName(const QString &newName)
+{
+    name = newName;
+    emit nameChanged();
+}
+
+void Field::updateCells()
+{
+    for (int i = 0; i < 10; ++i)
+        for (int j = 0; j < 10; ++j)
+            changeCellState(i, j, Cell::CellState::Unknown);
+
+    for (int i = 0; i < ships.size(); i++)
+        showAndSurroundKilled(i);
+}
+
+void Field::showAlive()
+{
+    for (auto &ship : ships)
+    {
+        QPoint start = ship.pos;
+        QPoint end = start;
+        end.rx() += ((static_cast<int>(ship.direction) + 1) % 2) * ship.length;
+        end.ry() += static_cast<int>(ship.direction) * ship.length;
+        while (start != end)
+        {
+            if (cellStates[start.x()][start.y()] == Cell::CellState::Unknown)
+                changeCellState(start, Cell::CellState::Shown);
+
+            start.rx() += (static_cast<int>(ship.direction) + 1) % 2;
+            start.ry() += static_cast<int>(ship.direction);
+        }
+    }
+}
+
+void Field::changeCellState(const QPoint &p, const Cell::CellState state)
+{
+    cells[p.x()][p.y()]->changeState(state);
+    cellStates[p.x()][p.y()] = state;
+}
+
+void Field::changeCellState(int x, int y, const Cell::CellState state)
+{
+    cells[x][y]->changeState(state);
+    cellStates[x][y] = state;
+}
+
+int Field::hit(const QPoint &position)
+{
+    // -1 - wrong move
+    // 0 - empty cell
+    // 1 - damaged a ship
+    if (cellStates[position.x()][position.y()] != Cell::CellState::Unknown)
+        return -1;
+
+    int res = checkHit(position);
+    changeCellState(position, Cell::CellState::Checked);
+    if (res == -1)
+        return 0;
+
+    changeCellState(position, Cell::CellState::Hit);
+    --ships[res].health;
+    emit healthChanged();
+
+    if (ships[res].health == 0)
+        showAndSurroundKilled(res);
+    return 1;
+}
+
+int Field::getShipNum() const
+{
+    return count_ships[0] + count_ships[1] +
+            count_ships[2] + count_ships[3];
+}
+
+bool Field::hasLost() const
+{
+    for (auto ship : ships)
+        if (ship.health)
+            return false;
+
+    return true;
+}
+
+bool Field::addShip(QPoint begin, QPoint end)
+{
+    if (begin.x() > end.x() || begin.y() > end.y())
+        qSwap(begin, end);
+    if (end.x() - begin.x() && end.y() - begin.y())
+        return false;
+
+    int direction = (int) (end.y() != begin.y());
+    int length = (end.x() - begin.x()) + (end.y() - begin.y()) + 1;
+
+    if (length > 4)
+        return false;
+    if (count_ships[length - 1] == 4 - length + 1)
+        return false;
+
+    QPoint curPos = begin;
+    while (curPos != end)
+    {
+        if (cellStates[curPos.x()][curPos.y()] == Cell::CellState::AutoChecked)
+            return false;
+        curPos.rx() += (direction + 1) % 2;
+        curPos.ry() += direction % 2;
+    }
+    if (cellStates[curPos.x()][curPos.y()] == Cell::CellState::AutoChecked)
+        return false;
+
+    ships.push_back(ship(begin, end));
+    count_ships[length - 1]++;
+
+    curPos = begin;
+    QVector<QPoint> currCells;
+    while (curPos != end)
+    {
+        getNeighbours(curPos, currCells);
+        changeCellState(curPos, Cell::CellState::Hit);
+        curPos.rx() += (direction + 1) % 2;
+        curPos.ry() += direction % 2;
+    }
+    changeCellState(curPos, Cell::CellState::Hit);
+    getNeighbours(curPos, currCells);
+
+    for (auto coordinates : currCells)
+        if (cellStates[coordinates.x()][coordinates.y()] == Cell::CellState::Unknown)
+            changeCellState(coordinates, Cell::CellState::AutoChecked);
+
+    emit shipCountChanged();
+    setFilled(getShipNum() == 10);
+
+    return true;
+}
+
+bool Field::isFilled()
+{
+    return filled;
+}
+
+void Field::setFilled(bool newFilled)
+{
+    filled = newFilled;
+    emit filledChanged();
+}
+
+void Field::RandomFill()
+{
+    qsrand(QTime::currentTime().msec());
+    DeleteShips();
+    for (int len = 4; len > 0; --len)
+    {
+        int num = 5 - len;
+        for (int i = 0; i < num;)
+        {
+            QPoint begin(qrand() % 10, qrand() % 10);
+            if (cellStates[begin.x()][begin.y()] != Cell::CellState::Unknown)
+                continue;
+
+            int dir = qrand() % 2;
+            QPoint end(begin.x() + (!dir) * (len - 1), begin.y() + dir * (len - 1));
+            if (end.x() >= 10 || end.y() >= 10)
+                continue;
+            if (cellStates[end.x()][end.y()] != Cell::CellState::Unknown)
+                continue;
+
+            if (addShip(begin, end))
+                ++i;
+        }
+    }
+    setFilled(true);
+    emit shipCountChanged();
+}
+
+void Field::DeleteShips()
+{
+    ships.clear();
+    count_ships.fill(0, 4);
+    clearCells();
+    emit shipCountChanged();
+    setFilled(false);
+}
+
+QString Field::getName() const
+{
+    return name;
+}
+
+QVector<int> Field::getShipCount()
+{
+    return count_ships;
+}
+
+QVector<Cell::CellState> &Field::operator[](int index)
+{
+    return cellStates[index];
+}
+
+Field::ship::ship(QPoint start, QPoint end)
+{
+    if (start.x() > end.x() || start.y() > end.y())
+        qSwap(start, end);
+
+    health = length = (end.x() - start.x()) + (end.y() - start.y()) + 1;
+    direction = ship::Direction(static_cast<int>(end.y() != start.y()));
+    pos = start;
+}
