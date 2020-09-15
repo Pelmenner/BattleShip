@@ -4,8 +4,7 @@ import QtQuick.Controls 2.0
 Item {
     id: homePage
 
-    signal playClicked()
-    signal playLocalClicked()
+    signal playClicked(bool online)
 
     Column{
          anchors.verticalCenter: homePage.verticalCenter
@@ -15,14 +14,14 @@ Item {
             text: "Play local"
             width: playOnlineButton.width
 
-            onClicked: homePage.playClicked()
+            onClicked: homePage.playClicked(false)
         }
 
         Button{
             id: playOnlineButton
             text: "Play online"
 
-            onClicked: homePage.playOnlineClicked()
+            onClicked: homePage.playClicked(true)
         }
     }
 }

@@ -16,7 +16,7 @@ Game::Game(QObject *parent) : QObject(parent)
     mainWindow = engine.rootObjects().first();
     if (!mainWindow)
     {
-        qDebug("cannot find MainWindow (qml)");
+        qDebug("could not find MainWindow (qml)");
         std::exit(-1);
     }
 
@@ -82,6 +82,11 @@ void Game::playLocal()
     connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(gameLoaded()));
 }
 
+void Game::playOnline()
+{
+
+}
+
 void Game::endLocalGame()
 {
     disconnect(frontField1, SIGNAL(cellClicked(int, int)), field1, SIGNAL(clickedEvent(int, int)));
@@ -101,7 +106,13 @@ void Game::endLocalGame()
     //emit gameFinished();
 }
 
-void Game::startGame()
+void Game::startOpponentSelection()
+{
+    connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(opponentSelectPageLoaded()));
+    emit opponentSelectionStarted();
+}
+
+void Game::startInitialization()
 {
     emit initializationStarted();
     connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(initLoaded()));
@@ -164,13 +175,19 @@ void Game::fieldPlayClicked(int x, int y)
 
 void Game::okClicked()
 {
-    if (gameState == GameState::initPlayer1 && gameMode == GameMode::local)
+    if (isOnline == true)
+    {
+        finishPlayerInit();
+        gameState = GameState::play;
+        playOnline();
+    }
+    if (gameState == GameState::initPlayer1)
     {
         finishPlayerInit();
         gameState = GameState::initPlayer2;
         initPlayer(field2);
     }
-    else if (gameState == GameState::initPlayer1 || gameState == GameState::initPlayer2)
+    else if (gameState == GameState::initPlayer2)
     {
         finishPlayerInit();
         gameState = GameState::play;
@@ -178,11 +195,17 @@ void Game::okClicked()
     }
 }
 
-void Game::playClicked()
+void Game::playClicked(bool online)
 {
-    disconnect(homePage, SIGNAL(playClicked()), this, SLOT(playClicked()));
-    connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(nameInputLoaded()));
-    emit nameInputStarted();
+    disconnect(homePage, SIGNAL(playClicked(bool)), this, SLOT(playClicked(bool)));
+    isOnline = online;
+    if (online)
+        startOpponentSelection();
+    else
+    {
+        connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(nameInputLoaded()));
+        emit nameInputStarted();
+    }
 }
 
 void Game::homePageLoaded()
@@ -196,7 +219,7 @@ void Game::homePageLoaded()
         std::exit(-1);
     }
 
-    connect(homePage, SIGNAL(playClicked()), this, SLOT(playClicked()));
+    connect(homePage, SIGNAL(playClicked(bool)), this, SLOT(playClicked(bool)));
 }
 
 void Game::initLoaded()
@@ -213,7 +236,7 @@ void Game::initLoaded()
     }
 
     gameState = GameState::initPlayer1;
-    gameMode = GameMode::local;
+    isOnline = false;
 
     initPlayer(field1);
 }
@@ -268,7 +291,7 @@ void Game::namesInputed()
     disconnect(namesInput, SIGNAL(completed()), this, SLOT(namesInputed()));
     field1->setName(namesInput->property("name1").toString());
     field2->setName(namesInput->property("name2").toString());
-    startGame();
+    startInitialization();
 }
 
 void Game::gameFinished()
@@ -293,6 +316,12 @@ void Game::restartPageLoaded()
     connect(restartPage, SIGNAL(homeClicked()), this, SLOT(homeClicked()));
 }
 
+void Game::opponentSelectPageLoaded()
+{
+    connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(opponentSelectPageLoaded()));
+    qDebug("opponent selection...");
+}
+
 void Game::exitClicked()
 {
     QCoreApplication::exit(0);
@@ -313,14 +342,13 @@ void Game::gameRestarted(bool saveNames)
     field2->DeleteShips();
     if (saveNames)
     {
-        startGame();
+        startInitialization();
     }
     else
     {
         connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(nameInputLoaded()));
         emit nameInputStarted();
     }
-
 }
 
 void Game::clearClicked()

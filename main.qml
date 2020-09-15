@@ -102,6 +102,15 @@ Window {
         }
     }
 
+    Component{
+        id: opponentSelectPage
+        OpponentSelectPage{
+            objectName: "OpponentSelectPage"
+            width: mainWindow.width
+            height: mainWindow.height
+        }
+    }
+
     function changeLoaderComponent(newComponent){
         loader.targetComponent = newComponent
     }
@@ -122,7 +131,10 @@ Window {
             changeLoaderComponent(restartPage)
         }
         onReturnedHome: {
-            changeLoaderComponent(homePage);
+            changeLoaderComponent(homePage)
+        }
+        onOpponentSelectionStarted: {
+            changeLoaderComponent(opponentSelectPage)
         }
     }
 }

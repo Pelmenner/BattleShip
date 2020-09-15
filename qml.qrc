@@ -16,5 +16,6 @@
         <file>data/ship4.png</file>
         <file>QML/Restart.qml</file>
         <file>data/Quando-Regular.ttf</file>
+        <file>QML/OpponentSelectPage.qml</file>
     </qresource>
 </RCC>
