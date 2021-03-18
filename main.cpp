@@ -14,6 +14,7 @@
 
 #include "game.h"
 #include "field.h"
+#include "player.h"
 
 int main(int argc, char *argv[])
 {
@@ -34,6 +35,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<Cell>("backend.Cell", 1, 0, "Cell");
     qmlRegisterType<Field>("backend.Field", 1, 0, "BackendField");
+    qmlRegisterType<Player>("backend.Player", 1, 0, "BackendPlayer");
 
 #ifdef Q_OS_ANDROID
     // set statusbar color

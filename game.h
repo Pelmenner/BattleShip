@@ -4,6 +4,8 @@
 #include <QObject>
 #include "field.h"
 
+class Connector;
+
 class Game : public QObject
 {
     Q_OBJECT
@@ -33,6 +35,7 @@ signals:
     void gameClosed();
     void returnedHome();
     void opponentSelectionStarted();
+    void waiting();
 
 public slots:
     void startInitialization();
@@ -53,20 +56,22 @@ private:
     QObject* namesInput;
     QObject* frontGame;
     QObject* restartPage;
+    QObject* opponentSelectPage;
 
     Field *field1, *field2, *curField;
-    QRect *hider;
+    Connector *connector;
     QPoint bufPos;
 
     void initPlayer(Field *field);
     void finishPlayerInit();
 
     void playLocal();
-    void playOnline();
     void endLocalGame();
     void startOpponentSelection();
+    void connectToServer(const QString& serverAddress, const QString& serverPort);
 
 private slots:
+    void playOnline();
     void fieldInitRClicked(int x, int y);
     void fieldInitClicked(int x, int y);
     void fieldPlayClicked(int x, int y);
@@ -88,6 +93,13 @@ private slots:
     void gameFinished();
     void restartPageLoaded();
     void opponentSelectPageLoaded();
+    void waitingPageLoaded();
+
+    void randomOpponentClicked(const QString& serverAddress, const QString& serverPort);
+    void friendOpponentClicked(const QString& serverAddress, const QString& serverPort);
+
+    void messageReceived(const QString &sender, const QString &text);
+    void connectionError(const QString& error);
 };
 
 #endif // GAME_H

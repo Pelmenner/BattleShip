@@ -31,13 +31,24 @@ public:
         ship() : length(0), direction(Direction::vertical), health(0) {};
     };
 
+    enum class MoveResult{wrongMove, emptyCell, damaged};
+
     explicit Field(QObject *parent = nullptr);
     Field(const Field& f);
 
     Q_INVOKABLE Cell* getCell(int x, int y);
 
+    QString shipsToString();
+    bool initCellsFromString(const QString& cellsString);
+    QString cellsToString() const;
+
     void setName(const QString &newName);
+    QString getName() const;
+
+    // erases ship containing current point (cell)
     bool erase(QPoint pos);
+
+    // operations with cells
     void clearCells();
     void updateCells();
     void showAlive();
@@ -48,20 +59,22 @@ public:
     void RandomFill();
     void DeleteShips();
 
-    int hit(const QPoint &position);
+    MoveResult hit(const QPoint &position);
     int getShipNum() const;
 
     bool hasLost() const;
     bool addShip(QPoint begin, QPoint end);
 
-    bool isFilled();
-    void setFilled(bool newFilled);
+    // are all the ships (10) placed
+    bool isFilled() const;
+    void setFilled(bool newFilled); // better do it private
 
-    int getTotalHealth();
+    int getTotalHealth() const;
 
-    QString getName() const;
-
+    // get number of ships given length for each length
     QVector<int> getShipCount();
+
+    //get row of cells
     QVector<Cell::CellState> &operator[](int index);
 
 signals:
@@ -73,8 +86,6 @@ signals:
     void shipCountChanged();
 
 private:
-    QQmlApplicationEngine engine;
-
     QVector <QVector <Cell*>> cells;
     QVector<QVector<Cell::CellState>> cellStates;
     QVector <int> count_ships;

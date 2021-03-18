@@ -24,6 +24,7 @@ public:
 
     explicit Cell(QObject *parent = 0, int x = 0, int y = 0);
     void changeState(CellState newState);
+    CellState getState() const;
     QString getColor() const;
 
 signals:

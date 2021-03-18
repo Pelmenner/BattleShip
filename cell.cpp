@@ -26,20 +26,12 @@ void Cell::changeState(Cell::CellState newState)
     emit colorChanged();
 }
 
+Cell::CellState Cell::getState() const
+{
+    return state;
+}
+
 QString Cell::getColor() const
 {
     return stateColorMapper[state].name();
 }
-
-/*void Cell::mousePressEvent(QMouseEvent *e)
-{
-    if(e->button()==Qt::RightButton)
-        emit rightClicked(x, y);
-    else if (e->button() == Qt::LeftButton)
-        emit leftClicked(x, y);
-}
-
-void Cell::mouseDoubleClickEvent(QMouseEvent*)
-{
-    emit rightClicked(x, y);
-}*/

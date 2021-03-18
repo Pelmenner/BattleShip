@@ -17,5 +17,7 @@
         <file>QML/Restart.qml</file>
         <file>data/Quando-Regular.ttf</file>
         <file>QML/OpponentSelectPage.qml</file>
+        <file>QML/PlayerView.qml</file>
+        <file>QML/WaitingPage.qml</file>
     </qresource>
 </RCC>

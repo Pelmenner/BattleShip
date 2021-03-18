@@ -15,9 +15,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         cell.cpp \
+        connector.cpp \
         field.cpp \
         game.cpp \
-        main.cpp
+        main.cpp \
+        player.cpp
 
 RESOURCES += qml.qrc
 
@@ -48,8 +50,10 @@ android {
 HEADERS += \
     cell.h \
     colors.h \
+    connector.h \
     field.h \
-    game.h
+    game.h \
+    player.h
 
 DISTFILES += \
     Android/res/values/styles.xml \

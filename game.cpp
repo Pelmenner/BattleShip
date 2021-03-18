@@ -1,14 +1,18 @@
 #include "game.h"
-#include <QDebug>
-#include <QQmlContext>
+#include "connector.h"
 #include <QGuiApplication>
+#include <QHostAddress>
+#include <QQmlContext>
+#include <QDebug>
 #include <QTimer>
 
-Game::Game(QObject *parent) : QObject(parent)
+Game::Game(QObject *parent)
+    : QObject(parent),
+      field1(new Field(this)),
+      field2(new Field(this)),
+      curField(field1),
+      connector(new Connector(this))
 {
-    curField = field1 = new Field(this);
-    field2 = new Field(this);
-
     context = engine.rootContext();
     context->setContextProperty("backend", this);
     engine.load(QUrl(QStringLiteral("qrc:///main.qml")));
@@ -112,6 +116,16 @@ void Game::startOpponentSelection()
     emit opponentSelectionStarted();
 }
 
+void Game::connectToServer(const QString& serverAddress, const QString& serverPort)
+{
+    qDebug("Connecting to server...");
+    connect(connector, SIGNAL(loginError(const QString&)), this, SLOT(connectionError(const QString&)));
+    connect(connector, SIGNAL(messageReceived(const QString&, const QString&)),
+            this, SLOT(messageReceived(const QString&, const QString&)));
+    connector->connectToServer(QHostAddress(serverAddress), serverPort.toInt());
+    connector->sendMessage("checkString");
+}
+
 void Game::startInitialization()
 {
     emit initializationStarted();
@@ -155,7 +169,7 @@ void Game::fieldPlayClicked(int x, int y)
 {
     if (sender() == curField && (*curField)[x][y] == Cell::CellState::Unknown)
     {
-        if (curField->hit(QPoint(x, y)) == 0)
+        if (curField->hit(QPoint(x, y)) == Field::MoveResult::emptyCell)
         {
             if (curField == field1)
             {
@@ -178,10 +192,12 @@ void Game::okClicked()
     if (isOnline == true)
     {
         finishPlayerInit();
+        connector->sendField(field1->shipsToString());
         gameState = GameState::play;
-        playOnline();
+        connect(connector, &Connector::gameStarted, this, &Game::playOnline);
+        emit waiting();
     }
-    if (gameState == GameState::initPlayer1)
+    else if (gameState == GameState::initPlayer1)
     {
         finishPlayerInit();
         gameState = GameState::initPlayer2;
@@ -197,6 +213,7 @@ void Game::okClicked()
 
 void Game::playClicked(bool online)
 {
+    qDebug() << "play clicked " << online;
     disconnect(homePage, SIGNAL(playClicked(bool)), this, SLOT(playClicked(bool)));
     isOnline = online;
     if (online)
@@ -236,7 +253,6 @@ void Game::initLoaded()
     }
 
     gameState = GameState::initPlayer1;
-    isOnline = false;
 
     initPlayer(field1);
 }
@@ -318,8 +334,47 @@ void Game::restartPageLoaded()
 
 void Game::opponentSelectPageLoaded()
 {
-    connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(opponentSelectPageLoaded()));
+    disconnect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(opponentSelectPageLoaded()));
+    opponentSelectPage = engine.rootObjects().first()->findChild<QObject*>("opponentSelectPage");
+    if (!opponentSelectPage)
+    {
+        qDebug("Could not find opponentSelectPage (qml)");
+        QCoreApplication::exit(-1);
+    }
+    connect(opponentSelectPage, SIGNAL(randomClicked(QString,  QString)),
+            this, SLOT(randomOpponentClicked(QString, QString)));
+    connect(opponentSelectPage, SIGNAL(friendClicked(QString, QString)),
+            this, SLOT(friendOpponentClicked(QString, QString)));
     qDebug("opponent selection...");
+}
+
+void Game::waitingPageLoaded()
+{
+}
+
+void Game::randomOpponentClicked(const QString& serverAddress, const QString& serverPort)
+{
+    emit waiting();
+    connectToServer(serverAddress, serverPort);
+    connector->lookForOpponent();
+    connect(connector, &Connector::opponentFound, this, &Game::startInitialization);
+}
+
+void Game::friendOpponentClicked(const QString& serverAddress, const QString& serverPort)
+{
+    emit waiting();
+    connectToServer(serverAddress, serverPort);
+    // implement later
+}
+
+void Game::messageReceived(const QString &sender, const QString &text)
+{
+    qDebug() << sender << " " << text;
+}
+
+void Game::connectionError(const QString &error)
+{
+    qDebug() << "Connection error:\n" << error;
 }
 
 void Game::exitClicked()
@@ -340,6 +395,7 @@ void Game::gameRestarted(bool saveNames)
     disconnect(restartPage, SIGNAL(restartClicked(bool)), this, SLOT(gameRestarted(bool)));
     field1->DeleteShips();
     field2->DeleteShips();
+
     if (saveNames)
     {
         startInitialization();
