@@ -49,7 +49,6 @@ android {
 
 HEADERS += \
     cell.h \
-    colors.h \
     connector.h \
     field.h \
     game.h \

@@ -1,5 +1,4 @@
 #include "cell.h"
-#include "colors.h"
 
 #include <QMouseEvent>
 #include <QCursor>
