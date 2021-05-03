@@ -9,10 +9,10 @@ class Cell : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(CellState state READ getState NOTIFY stateChanged)
+    Q_PROPERTY(State state READ getState NOTIFY stateChanged)
 
 public:
-    enum class CellState
+    enum class State
     {
         Unknown,
         Hit,
@@ -21,18 +21,18 @@ public:
         Shown,
         DrawStart //first cell when placing a ship
     };
-    Q_ENUM(CellState)
+    Q_ENUM(State)
 
     explicit Cell(QObject *parent = 0, int x = 0, int y = 0);
-    void changeState(CellState newState);
-    CellState getState() const;
+    void changeState(State newState);
+    State getState() const;
 
 signals:
     void stateChanged();
 
 private:
     int x, y;
-    CellState state;
+    State state;
 };
 
 #endif // CELL_H

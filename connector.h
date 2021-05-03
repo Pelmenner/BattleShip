@@ -16,8 +16,7 @@ public:
 
 public slots:
     void connectToServer(const QHostAddress &address, quint16 port);
-    void login(const QString &userName);
-    void sendMessage(const QString &text);
+    //void login(const QString &userName);
     void disconnectFromHost();
 
 private slots:
@@ -32,6 +31,9 @@ signals:
     void error(QAbstractSocket::SocketError socketError);
     void gameStarted();
     void opponentFound();
+    void gotTurn(int isCurrent);
+    void gotField(const QString& cellString, int player);
+    void gameFinished(bool isWinner);
 
 private:
     QTcpSocket *m_clientSocket;

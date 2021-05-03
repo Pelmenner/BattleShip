@@ -8,16 +8,16 @@
 #include <QColor>
 
 Cell::Cell(QObject *parent, int x, int y) :
-    QObject(parent), x(x), y(y), state(CellState::Unknown)
+    QObject(parent), x(x), y(y), state(State::Unknown)
 {}
 
-void Cell::changeState(Cell::CellState newState)
+void Cell::changeState(Cell::State newState)
 {
     state = newState;
     emit stateChanged();
 }
 
-Cell::CellState Cell::getState() const
+Cell::State Cell::getState() const
 {
     return state;
 }

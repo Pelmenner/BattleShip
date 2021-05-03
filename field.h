@@ -31,7 +31,7 @@ public:
         ship() : length(0), direction(Direction::vertical), health(0) {};
     };
 
-    enum class MoveResult{wrongMove, emptyCell, damaged};
+    enum class MoveResult{WrongMove, EmptyCell, Damaged};
 
     explicit Field(QObject *parent = nullptr);
     Field(const Field& f);
@@ -52,9 +52,10 @@ public:
     void clearCells();
     void updateCells();
     void showAlive();
+    void lose();
 
-    void changeCellState(const QPoint& p, const Cell::CellState state);
-    void changeCellState(int x, int y, const Cell::CellState state);
+    void changeCellState(const QPoint& p, const Cell::State state);
+    void changeCellState(int x, int y, const Cell::State state);
 
     void RandomFill();
     void DeleteShips();
@@ -75,7 +76,7 @@ public:
     QVector<int> getShipCount();
 
     //get row of cells
-    QVector<Cell::CellState> &operator[](int index);
+    QVector<Cell::State> &operator[](int index);
 
 signals:
     void clickedEvent(int, int);
@@ -87,12 +88,13 @@ signals:
 
 private:
     QVector <QVector <Cell*>> cells;
-    QVector<QVector<Cell::CellState>> cellStates;
+    QVector<QVector<Cell::State>> cellStates;
     QVector <int> count_ships;
     QVector <ship> ships;
     QString name;
 
     bool filled;
+    bool lost;
 
     int checkHit(const QPoint& position) const;
     void showAndSurroundKilled(int index);

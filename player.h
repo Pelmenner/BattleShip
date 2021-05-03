@@ -3,6 +3,8 @@
 
 #include <QObject>
 
+// not used now
+
 class Player : public QObject
 {
     Q_OBJECT

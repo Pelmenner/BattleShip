@@ -39,6 +39,7 @@ signals:
 
 public slots:
     void startInitialization();
+    void setTurn(int isCurrent);
 
 private:
     enum class GameState {begin, initPlayer1, initPlayer2, play, connect};
@@ -61,6 +62,7 @@ private:
     Field *field1, *field2, *curField;
     Connector *connector;
     QPoint bufPos;
+    int turn;
 
     void initPlayer(Field *field);
     void finishPlayerInit();
@@ -100,6 +102,9 @@ private slots:
 
     void messageReceived(const QString &sender, const QString &text);
     void connectionError(const QString& error);
+
+    void fieldRecieved(const QString& cellString, int player);
+    void onlineGameFinished(bool isWinner);
 };
 
 #endif // GAME_H

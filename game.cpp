@@ -11,7 +11,7 @@ Game::Game(QObject *parent)
       field1(new Field(this)),
       field2(new Field(this)),
       curField(field1),
-      connector(new Connector(this))
+      connector(new Connector(this)), turn(0)
 {
     context = engine.rootContext();
     context->setContextProperty("backend", this);
@@ -88,7 +88,8 @@ void Game::playLocal()
 
 void Game::playOnline()
 {
-
+    emit localGameStarted();
+    connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(gameLoaded()));
 }
 
 void Game::endLocalGame()
@@ -119,17 +120,23 @@ void Game::startOpponentSelection()
 void Game::connectToServer(const QString& serverAddress, const QString& serverPort)
 {
     qDebug("Connecting to server...");
-    connect(connector, SIGNAL(loginError(const QString&)), this, SLOT(connectionError(const QString&)));
-    connect(connector, SIGNAL(messageReceived(const QString&, const QString&)),
-            this, SLOT(messageReceived(const QString&, const QString&)));
+    connect(connector, &Connector::loginError, this, &Game::connectionError);
+    connect(connector, &Connector::messageReceived, this, &Game::messageReceived);
+    connect(connector, &Connector::gotTurn, this, &Game::setTurn);
+    connect(connector, &Connector::gotField, this, &Game::fieldRecieved);
+    connect(connector, &Connector::gameFinished, this, &Game::onlineGameFinished);
     connector->connectToServer(QHostAddress(serverAddress), serverPort.toInt());
-    connector->sendMessage("checkString");
 }
 
 void Game::startInitialization()
 {
     emit initializationStarted();
     connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(initLoaded()));
+}
+
+void Game::setTurn(int isCurrent)
+{
+    turn = isCurrent;
 }
 
 void Game::fieldInitRClicked(int x, int y)
@@ -144,9 +151,9 @@ void Game::fieldInitClicked(int x, int y)
 {
     if (!drawing)
     {
-        if ((*curField)[x][y] == Cell::CellState::Unknown && curField->getShipNum() != 10)
+        if ((*curField)[x][y] == Cell::State::Unknown && curField->getShipNum() != 10)
         {
-            curField->changeCellState(x, y, Cell::CellState::DrawStart);
+            curField->changeCellState(x, y, Cell::State::DrawStart);
             drawing = true;
             bufPos = QPoint(x, y);
         }
@@ -154,7 +161,7 @@ void Game::fieldInitClicked(int x, int y)
     else
     {
         if (!curField->addShip(bufPos, QPoint(x, y)))
-            curField->changeCellState(bufPos, Cell::CellState::Unknown);
+            curField->changeCellState(bufPos, Cell::State::Unknown);
         else
         {
             if (curField->getShipNum() == 10)
@@ -167,9 +174,16 @@ void Game::fieldInitClicked(int x, int y)
 
 void Game::fieldPlayClicked(int x, int y)
 {
-    if (sender() == curField && (*curField)[x][y] == Cell::CellState::Unknown)
+    if (isOnline)
     {
-        if (curField->hit(QPoint(x, y)) == Field::MoveResult::emptyCell)
+        if (turn == 1)
+            connector->sendMove(x, y);
+        return;
+    }
+
+    if (sender() == curField && (*curField)[x][y] == Cell::State::Unknown)
+    {
+        if (curField->hit(QPoint(x, y)) == Field::MoveResult::EmptyCell)
         {
             if (curField == field1)
             {
@@ -251,8 +265,6 @@ void Game::initLoaded()
         qDebug("cannot find FieldInitializer (qml)");
         QCoreApplication::exit(-1);
     }
-
-    gameState = GameState::initPlayer1;
 
     initPlayer(field1);
 }
@@ -375,6 +387,22 @@ void Game::messageReceived(const QString &sender, const QString &text)
 void Game::connectionError(const QString &error)
 {
     qDebug() << "Connection error:\n" << error;
+}
+
+void Game::fieldRecieved(const QString &cellString, int player)
+{
+    if (player == 0)
+        field1->initCellsFromString(cellString);
+    else
+        field2->initCellsFromString(cellString);
+}
+
+void Game::onlineGameFinished(bool isWinner)
+{
+    if (isWinner)
+        field2->lose();
+    else
+        field1->lose();
 }
 
 void Game::exitClicked()
