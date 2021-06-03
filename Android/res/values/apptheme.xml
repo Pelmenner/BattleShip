@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar">
-		<item name="android:windowBackground">@drawable/splash_screen</item>
+    <style name="AppTheme" parent="@android:style/Theme.DeviceDefault">
+		<item name="android:windowDrawsSystemBarBackgrounds">false</item>
 		<item name="android:statusBarColor">#252525</item>
+		<item name="android:windowNoTitle">true</item>
+		<item name="android:windowBackground">@drawable/splash_screen</item>
     </style>
 </resources>

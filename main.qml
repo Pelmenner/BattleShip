@@ -6,6 +6,7 @@ import QtQuick.Controls.Material 2.0
 import "QML"
 
 Window {
+    color: "#252525"
     id: mainWindow
     objectName: "mainWindow"
     visible: true
@@ -17,6 +18,7 @@ Window {
     signal loadCompleted()
 
     Material.theme: Material.Dark
+    Material.accent: Material.Purple
     Material.foreground: Material.theme == Material.Dark? 'white' : 'black'
 
     Loader{
@@ -105,7 +107,16 @@ Window {
     Component{
         id: opponentSelectPage
         OpponentSelectPage{
-            objectName: "OpponentSelectPage"
+            objectName: "opponentSelectPage"
+            width: mainWindow.width
+            height: mainWindow.height
+        }
+    }
+
+    Component{
+        id: waitingPage
+        WaitingPage{
+            objectName: "waitingPage"
             width: mainWindow.width
             height: mainWindow.height
         }
@@ -135,6 +146,9 @@ Window {
         }
         onOpponentSelectionStarted: {
             changeLoaderComponent(opponentSelectPage)
+        }
+        onWaiting: {
+            changeLoaderComponent(waitingPage)
         }
     }
 }

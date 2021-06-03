@@ -11,6 +11,13 @@ Item {
     property string name1: player1Input.text
     property string name2: player2Input.text
 
+    Keys.onReleased: {
+        if (event.key === Qt.Key_Back) {
+            backend.returnHome();
+            event.accepted = true
+        }
+    }
+
     Text{
         id: player1Text
 
@@ -108,16 +115,21 @@ Item {
         id: warningText
 
         anchors{
-            horizontalCenter: namesInput.horizontalCenter
+
             bottom: namesInput.bottom
             bottomMargin: namesInput.height / 4
+            left: namesInput.left
+            right: namesInput.right
         }
-
+        horizontalAlignment: Text.AlignHCenter
         text: {player1Input.text.length == 0 ? "First player's name must not be empty" :
                                                player2Input.text.length == 0 ? "Second player's name must not be empty" :
                                                                                "Names must not match"}
         color: Material.color(Material.Red)
-        font.pointSize: namesInput.landscape? namesInput.height / 40 : namesInput.width / 40
+        minimumPointSize: 6
+        font.pointSize: 15
+        fontSizeMode: Text.Fit
+        //font.pointSize: namesInput.landscape? namesInput.height / 40 : namesInput.width / 40
         opacity: player1Input.text.length == 0 || player2Input.text.length == 0 || player1Input.text == player2Input.text
 
         Behavior on opacity {

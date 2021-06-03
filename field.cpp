@@ -1,14 +1,12 @@
 #include "field.h"
 
-#include <QColor>
 #include <QTime>
-#include <QPropertyAnimation>
 
-Field::Field(QObject *parent) : QObject(parent), filled(false)
+Field::Field(QObject *parent) : QObject(parent), filled(false), lost(false)
 {    
     count_ships.resize(4);
     cells.fill(QVector<Cell*>(10), 10);
-    cellStates.fill(QVector<Cell::CellState>(10, Cell::CellState::Unknown), 10);
+    cellStates.fill(QVector<Cell::State>(10, Cell::State::Unknown), 10);
 
     for (int i = 0; i < 10; ++i)
         for (int j = 0; j < 10; ++j)
@@ -16,7 +14,7 @@ Field::Field(QObject *parent) : QObject(parent), filled(false)
 }
 
 Field::Field(const Field &f): cells(f.cells), cellStates(f.cellStates),
-    count_ships(f.count_ships), name(f.name), filled(f.filled){}
+    count_ships(f.count_ships), name(f.name), filled(f.filled), lost(f.lost){}
 
 Cell *Field::getCell(int x, int y)
 {
@@ -57,22 +55,23 @@ void Field::showAndSurroundKilled(int index)
     end.ry() = start.y() + static_cast<int>(ships[index].direction) * ships[index].length;
 
     QPoint curPos = start;
-    QVector <QPoint> currCells;
+    QVector <QPoint> cellsNearKilled;
     while (curPos != end)
     {
-        changeCellState(curPos, Cell::CellState::Hit);
-        getNeighbours(curPos, currCells);
+        changeCellState(curPos, Cell::State::Hit);
+        getNeighbours(curPos, cellsNearKilled);
         curPos.rx() += (static_cast<int>(ships[index].direction) + 1) % 2;
         curPos.ry() += static_cast<int>(ships[index].direction) % 2;
     }
 
-    for (auto coordinates : currCells)
-        if (cellStates[coordinates.x()][coordinates.y()] == Cell::CellState::Unknown)
-            changeCellState(coordinates, Cell::CellState::AutoChecked);
+    for (const auto& coordinates : cellsNearKilled)
+        if (cellStates[coordinates.x()][coordinates.y()] == Cell::State::Unknown)
+            changeCellState(coordinates, Cell::State::AutoChecked);
 }
 
 void Field::getNeighbours(QPoint pos, QVector<QPoint> &ans)
 {
+    // there should be a way to do it easer
     if (pos.x() > 0 && pos.y() > 0)
         ans.push_back({ pos.x() - 1, pos.y() - 1 });
     if (pos.x() > 0)
@@ -91,11 +90,14 @@ void Field::getNeighbours(QPoint pos, QVector<QPoint> &ans)
         ans.push_back({ pos.x(), pos.y() + 1 });
 }
 
-int Field::getTotalHealth()
+int Field::getTotalHealth() const
 {
-    int totalHealth = 0;
-    for (auto& ship : ships)
-        totalHealth += ship.health;
+    if (lost)
+        return 0;
+
+    int totalHealth = 4 + 3 * 2 + 2 * 3 + 4;
+    for (const auto& ship : ships)
+        totalHealth -= ship.length - ship.health;
     return totalHealth;
 }
 
@@ -138,7 +140,7 @@ void Field::clearCells()
 {
     for (int i = 0; i < 10; ++i)
         for (int j = 0; j < 10; ++j)
-            changeCellState(i, j, Cell::CellState::Unknown);
+            changeCellState(i, j, Cell::State::Unknown);
 }
 
 void Field::setName(const QString &newName)
@@ -151,7 +153,7 @@ void Field::updateCells()
 {
     for (int i = 0; i < 10; ++i)
         for (int j = 0; j < 10; ++j)
-            changeCellState(i, j, Cell::CellState::Unknown);
+            changeCellState(i, j, Cell::State::Unknown);
 
     for (int i = 0; i < ships.size(); i++)
         showAndSurroundKilled(i);
@@ -159,7 +161,7 @@ void Field::updateCells()
 
 void Field::showAlive()
 {
-    for (auto &ship : ships)
+    for (const auto &ship : ships)
     {
         QPoint start = ship.pos;
         QPoint end = start;
@@ -167,8 +169,8 @@ void Field::showAlive()
         end.ry() += static_cast<int>(ship.direction) * ship.length;
         while (start != end)
         {
-            if (cellStates[start.x()][start.y()] == Cell::CellState::Unknown)
-                changeCellState(start, Cell::CellState::Shown);
+            if (cellStates[start.x()][start.y()] == Cell::State::Unknown)
+                changeCellState(start, Cell::State::Shown);
 
             start.rx() += (static_cast<int>(ship.direction) + 1) % 2;
             start.ry() += static_cast<int>(ship.direction);
@@ -176,38 +178,41 @@ void Field::showAlive()
     }
 }
 
-void Field::changeCellState(const QPoint &p, const Cell::CellState state)
+void Field::lose()
+{
+    lost = true;
+    emit healthChanged();
+}
+
+void Field::changeCellState(const QPoint &p, const Cell::State state)
 {
     cells[p.x()][p.y()]->changeState(state);
     cellStates[p.x()][p.y()] = state;
 }
 
-void Field::changeCellState(int x, int y, const Cell::CellState state)
+void Field::changeCellState(int x, int y, const Cell::State state)
 {
     cells[x][y]->changeState(state);
     cellStates[x][y] = state;
 }
 
-int Field::hit(const QPoint &position)
+Field::MoveResult Field::hit(const QPoint &position)
 {
-    // -1 - wrong move
-    // 0 - empty cell
-    // 1 - damaged a ship
-    if (cellStates[position.x()][position.y()] != Cell::CellState::Unknown)
-        return -1;
+    if (cellStates[position.x()][position.y()] != Cell::State::Unknown)
+        return MoveResult::WrongMove;
 
     int res = checkHit(position);
-    changeCellState(position, Cell::CellState::Checked);
+    changeCellState(position, Cell::State::Checked);
     if (res == -1)
-        return 0;
+        return MoveResult::EmptyCell;
 
-    changeCellState(position, Cell::CellState::Hit);
+    changeCellState(position, Cell::State::Hit);
     --ships[res].health;
     emit healthChanged();
 
     if (ships[res].health == 0)
         showAndSurroundKilled(res);
-    return 1;
+    return MoveResult::Damaged;
 }
 
 int Field::getShipNum() const
@@ -218,7 +223,7 @@ int Field::getShipNum() const
 
 bool Field::hasLost() const
 {
-    for (auto ship : ships)
+    for (const auto& ship : ships)
         if (ship.health)
             return false;
 
@@ -243,12 +248,12 @@ bool Field::addShip(QPoint begin, QPoint end)
     QPoint curPos = begin;
     while (curPos != end)
     {
-        if (cellStates[curPos.x()][curPos.y()] == Cell::CellState::AutoChecked)
+        if (cellStates[curPos.x()][curPos.y()] == Cell::State::AutoChecked)
             return false;
         curPos.rx() += (direction + 1) % 2;
         curPos.ry() += direction % 2;
     }
-    if (cellStates[curPos.x()][curPos.y()] == Cell::CellState::AutoChecked)
+    if (cellStates[curPos.x()][curPos.y()] == Cell::State::AutoChecked)
         return false;
 
     ships.push_back(ship(begin, end));
@@ -259,16 +264,16 @@ bool Field::addShip(QPoint begin, QPoint end)
     while (curPos != end)
     {
         getNeighbours(curPos, currCells);
-        changeCellState(curPos, Cell::CellState::Hit);
+        changeCellState(curPos, Cell::State::Hit);
         curPos.rx() += (direction + 1) % 2;
         curPos.ry() += direction % 2;
     }
-    changeCellState(curPos, Cell::CellState::Hit);
+    changeCellState(curPos, Cell::State::Hit);
     getNeighbours(curPos, currCells);
 
     for (auto coordinates : currCells)
-        if (cellStates[coordinates.x()][coordinates.y()] == Cell::CellState::Unknown)
-            changeCellState(coordinates, Cell::CellState::AutoChecked);
+        if (cellStates[coordinates.x()][coordinates.y()] == Cell::State::Unknown)
+            changeCellState(coordinates, Cell::State::AutoChecked);
 
     emit shipCountChanged();
     setFilled(getShipNum() == 10);
@@ -276,7 +281,7 @@ bool Field::addShip(QPoint begin, QPoint end)
     return true;
 }
 
-bool Field::isFilled()
+bool Field::isFilled() const
 {
     return filled;
 }
@@ -293,22 +298,22 @@ void Field::RandomFill()
     DeleteShips();
     for (int len = 4; len > 0; --len)
     {
-        int num = 5 - len;
-        for (int i = 0; i < num;)
+        int shipsLeft = 5 - len;
+        while(shipsLeft != 0)
         {
             QPoint begin(qrand() % 10, qrand() % 10);
-            if (cellStates[begin.x()][begin.y()] != Cell::CellState::Unknown)
+            if (cellStates[begin.x()][begin.y()] != Cell::State::Unknown)
                 continue;
 
             int dir = qrand() % 2;
             QPoint end(begin.x() + (!dir) * (len - 1), begin.y() + dir * (len - 1));
             if (end.x() >= 10 || end.y() >= 10)
                 continue;
-            if (cellStates[end.x()][end.y()] != Cell::CellState::Unknown)
+            if (cellStates[end.x()][end.y()] != Cell::State::Unknown)
                 continue;
 
             if (addShip(begin, end))
-                ++i;
+                --shipsLeft;
         }
     }
     setFilled(true);
@@ -334,7 +339,7 @@ QVector<int> Field::getShipCount()
     return count_ships;
 }
 
-QVector<Cell::CellState> &Field::operator[](int index)
+QVector<Cell::State> &Field::operator[](int index)
 {
     return cellStates[index];
 }
@@ -347,4 +352,87 @@ Field::ship::ship(QPoint start, QPoint end)
     health = length = (end.x() - start.x()) + (end.y() - start.y()) + 1;
     direction = ship::Direction(static_cast<int>(end.y() != start.y()));
     pos = start;
+}
+
+QString Field::shipsToString()
+{
+    QString result;
+    for (const auto& ship : ships)
+    {
+        result.push_back('0' + ship.pos.x());
+        result.push_back('0' + ship.pos.y());
+        result.push_back('0' + ship.length);
+        result.push_back(ship.direction == ship::Direction::vertical ? '1' : '0');
+    }
+    return result;
+}
+
+bool Field::initCellsFromString(const QString &cellsString)
+{
+    if (cellsString.length() != 10 * 10)
+        return false;
+
+    for (int i = 0; i < 10; ++i)
+    {
+        for (int j = 0; j < 10; ++j)
+        {
+            switch(cellsString[i * 10 + j].unicode())
+            {
+            case 'U':
+                cells[i][j]->changeState(Cell::State::Unknown);
+                break;
+            case 'H':
+                cells[i][j]->changeState(Cell::State::Hit);
+                break;
+            case 'C':
+                cells[i][j]->changeState(Cell::State::Checked);
+                break;
+            case 'A':
+                cells[i][j]->changeState(Cell::State::AutoChecked);
+                break;
+            case 'S':
+                cells[i][j]->changeState(Cell::State::Shown);
+                break;
+            case 'D': // probably shouldn't be used
+                cells[i][j]->changeState(Cell::State::DrawStart);
+                break;
+            default:
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+QString Field::cellsToString() const
+{
+    QString result;
+    for (int i = 0; i < 10; ++i)
+    {
+        for (int j = 0; j < 10; ++j)
+        {
+            switch(cells[i][j]->getState())
+            {
+            case Cell::State::AutoChecked:
+                result.push_back('A');
+                break;
+            case Cell::State::Checked:
+                result.push_back('C');
+                break;
+            case Cell::State::DrawStart:
+                result.push_back('D');
+                break;
+            case Cell::State::Hit:
+                result.push_back('H');
+                break;
+            case Cell::State::Shown:
+                result.push_back('S');
+                break;
+            case Cell::State::Unknown:
+                result.push_back('U');
+                break;
+            }
+        }
+    }
+    return result;
 }

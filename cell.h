@@ -9,32 +9,30 @@ class Cell : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString color READ getColor NOTIFY colorChanged)
+    Q_PROPERTY(State state READ getState NOTIFY stateChanged)
 
 public:
-    enum class CellState
+    enum class State
     {
         Unknown,
         Hit,
         Checked,
         AutoChecked,
         Shown,
-        DrawStart
+        DrawStart //first cell when placing a ship
     };
+    Q_ENUM(State)
 
     explicit Cell(QObject *parent = 0, int x = 0, int y = 0);
-    void changeState(CellState newState);
-    QString getColor() const;
+    void changeState(State newState);
+    State getState() const;
 
 signals:
-    void rightClicked(int, int);
-    void leftClicked(int, int);
-    void colorChanged();
+    void stateChanged();
 
 private:
     int x, y;
-    static QMap<CellState, QColor> stateColorMapper;
-    CellState state;
+    State state;
 };
 
 #endif // CELL_H

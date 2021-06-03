@@ -1,14 +1,18 @@
 #include "game.h"
-#include <QDebug>
-#include <QQmlContext>
+#include "connector.h"
 #include <QGuiApplication>
+#include <QHostAddress>
+#include <QQmlContext>
+#include <QDebug>
 #include <QTimer>
 
-Game::Game(QObject *parent) : QObject(parent)
+Game::Game(QObject *parent)
+    : QObject(parent),
+      field1(new Field(this)),
+      field2(new Field(this)),
+      curField(field1),
+      connector(new Connector(this)), turn(0)
 {
-    curField = field1 = new Field(this);
-    field2 = new Field(this);
-
     context = engine.rootContext();
     context->setContextProperty("backend", this);
     engine.load(QUrl(QStringLiteral("qrc:///main.qml")));
@@ -17,7 +21,7 @@ Game::Game(QObject *parent) : QObject(parent)
     if (!mainWindow)
     {
         qDebug("could not find MainWindow (qml)");
-        std::exit(-1);
+        QCoreApplication::exit(-1);
     }
 
     connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(homePageLoaded()));
@@ -36,6 +40,11 @@ Field *Game::getFirstField()
 Field *Game::getSecondField()
 {
     return field2;
+}
+
+QString Game::getWaitingInfo()
+{
+    return waitingInfo;
 }
 
 void Game::finishPlayerInit()
@@ -84,7 +93,8 @@ void Game::playLocal()
 
 void Game::playOnline()
 {
-
+    emit localGameStarted();
+    connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(gameLoaded()));
 }
 
 void Game::endLocalGame()
@@ -112,10 +122,26 @@ void Game::startOpponentSelection()
     emit opponentSelectionStarted();
 }
 
+void Game::connectToServer(const QString& serverAddress, const QString& serverPort, const QString& playerName)
+{
+    qDebug("Connecting to server...");
+    connect(connector, &Connector::loginError, this, &Game::connectionError);
+    connect(connector, &Connector::messageReceived, this, &Game::messageReceived);
+    connect(connector, &Connector::gotTurn, this, &Game::setTurn);
+    connect(connector, &Connector::gotField, this, &Game::fieldRecieved);
+    connect(connector, &Connector::gameFinished, this, &Game::onlineGameFinished);
+    connector->connectToServer(QHostAddress(serverAddress), serverPort.toInt(), playerName);
+}
+
 void Game::startInitialization()
 {
     emit initializationStarted();
     connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(initLoaded()));
+}
+
+void Game::setTurn(int isCurrent)
+{
+    turn = isCurrent;
 }
 
 void Game::fieldInitRClicked(int x, int y)
@@ -130,9 +156,9 @@ void Game::fieldInitClicked(int x, int y)
 {
     if (!drawing)
     {
-        if ((*curField)[x][y] == Cell::CellState::Unknown && curField->getShipNum() != 10)
+        if ((*curField)[x][y] == Cell::State::Unknown && curField->getShipNum() != 10)
         {
-            curField->changeCellState(x, y, Cell::CellState::DrawStart);
+            curField->changeCellState(x, y, Cell::State::DrawStart);
             drawing = true;
             bufPos = QPoint(x, y);
         }
@@ -140,7 +166,7 @@ void Game::fieldInitClicked(int x, int y)
     else
     {
         if (!curField->addShip(bufPos, QPoint(x, y)))
-            curField->changeCellState(bufPos, Cell::CellState::Unknown);
+            curField->changeCellState(bufPos, Cell::State::Unknown);
         else
         {
             if (curField->getShipNum() == 10)
@@ -153,9 +179,16 @@ void Game::fieldInitClicked(int x, int y)
 
 void Game::fieldPlayClicked(int x, int y)
 {
-    if (sender() == curField && (*curField)[x][y] == Cell::CellState::Unknown)
+    if (isOnline)
     {
-        if (curField->hit(QPoint(x, y)) == 0)
+        if (turn == 1 && sender() == field1)
+            connector->sendMove(x, y);
+        return;
+    }
+
+    if (sender() == curField && (*curField)[x][y] == Cell::State::Unknown)
+    {
+        if (curField->hit(QPoint(x, y)) == Field::MoveResult::EmptyCell)
         {
             if (curField == field1)
             {
@@ -178,10 +211,12 @@ void Game::okClicked()
     if (isOnline == true)
     {
         finishPlayerInit();
+        connector->sendField(field1->shipsToString());
         gameState = GameState::play;
-        playOnline();
+        connect(connector, &Connector::gameStarted, this, &Game::playOnline);
+        emit waiting();
     }
-    if (gameState == GameState::initPlayer1)
+    else if (gameState == GameState::initPlayer1)
     {
         finishPlayerInit();
         gameState = GameState::initPlayer2;
@@ -197,6 +232,7 @@ void Game::okClicked()
 
 void Game::playClicked(bool online)
 {
+    qDebug() << "play clicked " << online;
     disconnect(homePage, SIGNAL(playClicked(bool)), this, SLOT(playClicked(bool)));
     isOnline = online;
     if (online)
@@ -216,7 +252,7 @@ void Game::homePageLoaded()
     if (!homePage)
     {
         qDebug("cannot find HomePage (qml)");
-        std::exit(-1);
+        QCoreApplication::exit(-1);
     }
 
     connect(homePage, SIGNAL(playClicked(bool)), this, SLOT(playClicked(bool)));
@@ -234,9 +270,6 @@ void Game::initLoaded()
         qDebug("cannot find FieldInitializer (qml)");
         QCoreApplication::exit(-1);
     }
-
-    gameState = GameState::initPlayer1;
-    isOnline = false;
 
     initPlayer(field1);
 }
@@ -318,8 +351,81 @@ void Game::restartPageLoaded()
 
 void Game::opponentSelectPageLoaded()
 {
-    connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(opponentSelectPageLoaded()));
-    qDebug("opponent selection...");
+    disconnect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(opponentSelectPageLoaded()));
+    opponentSelectPage = engine.rootObjects().first()->findChild<QObject*>("opponentSelectPage");
+    if (!opponentSelectPage)
+    {
+        qDebug("Could not find opponentSelectPage (qml)");
+        QCoreApplication::exit(-1);
+    }
+    connect(opponentSelectPage, SIGNAL(randomClicked(QString,  QString, QString)),
+            this, SLOT(randomOpponentClicked(QString, QString, QString)));
+    connect(opponentSelectPage, SIGNAL(createClicked(QString, QString, QString)),
+            this, SLOT(createRoomClicked(QString, QString, QString)));
+    connect(opponentSelectPage, SIGNAL(joinClicked(QString, QString, QString, QString)),
+            this, SLOT(joinRoomClicked(QString, QString, QString, QString)));
+    qDebug("Opponent selection...");
+}
+
+void Game::waitingPageLoaded()
+{
+}
+
+void Game::randomOpponentClicked(const QString& serverAddress, const QString& serverPort, const QString& playerName)
+{
+    emit waiting();
+    connectToServer(serverAddress, serverPort, playerName);
+    connector->lookForOpponent();
+    connect(connector, &Connector::opponentFound, this, &Game::startInitialization);
+}
+
+void Game::createRoomClicked(const QString &serverAddress, const QString &serverPort, const QString& playerName)
+{
+    emit waiting();
+    connectToServer(serverAddress, serverPort, playerName);
+    connect(connector, &Connector::opponentFound, this, &Game::startInitialization);
+    connect(connector, &Connector::roomIdRecieved, [this](int id){changeWaitingInfo(QString::number(id));});
+    connector->createRoom();
+}
+
+void Game::joinRoomClicked(const QString &serverAddress, const QString &serverPort, const QString& playerName, const QString &roomId)
+{
+    emit waiting();
+    connectToServer(serverAddress, serverPort, playerName);
+    connect(connector, &Connector::opponentFound, this, &Game::startInitialization);
+    connector->joinRoom(roomId.toInt());
+}
+
+void Game::messageReceived(const QString &sender, const QString &text)
+{
+    qDebug() << sender << " " << text;
+}
+
+void Game::connectionError(const QString &error)
+{
+    qDebug() << "Connection error:\n" << error;
+}
+
+void Game::fieldRecieved(const QString &cellString, int player)
+{
+    if (player == 0)
+        field1->initCellsFromString(cellString);
+    else
+        field2->initCellsFromString(cellString);
+}
+
+void Game::onlineGameFinished(bool isWinner)
+{
+    if (isWinner)
+        field2->lose();
+    else
+        field1->lose();
+}
+
+void Game::changeWaitingInfo(const QString &info)
+{
+    waitingInfo = info;
+    emit waitingInfoChanged();
 }
 
 void Game::exitClicked()
@@ -327,7 +433,7 @@ void Game::exitClicked()
     QCoreApplication::exit(0);
 }
 
-void Game::homeClicked()
+void Game::returnHome()
 {
     connect(mainWindow, SIGNAL(loadCompleted()), this, SLOT(homePageLoaded()));
     field1->DeleteShips();
@@ -340,6 +446,7 @@ void Game::gameRestarted(bool saveNames)
     disconnect(restartPage, SIGNAL(restartClicked(bool)), this, SLOT(gameRestarted(bool)));
     field1->DeleteShips();
     field2->DeleteShips();
+
     if (saveNames)
     {
         startInitialization();

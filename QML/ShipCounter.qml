@@ -7,7 +7,6 @@ Item {
 
     property BackendField backendField: backend.curField
 
-
     ColumnLayout {
         id: columnLayout
         anchors.fill: parent

@@ -6,6 +6,7 @@ Item {
     id: restartPage
 
     property int fontSize: height / 25
+    property bool landscape: width > height
 
     signal restartClicked(bool saveNames)
     signal homeClicked()
@@ -79,14 +80,14 @@ Item {
         id: buttonColumn
         anchors.horizontalCenter: restartPage.horizontalCenter
         anchors.bottom: restartPage.bottom
-        height: restartPage.height / 3
+        height: restartPage.landscape? restartPage.height / 2 : restartPage.height / 3
         spacing: restartPage.height / 40
 
         Button{
             id: restartButton
             anchors.horizontalCenter: buttonColumn.horizontalCenter
             width: restartPage.width / 2
-            height: restartPage.height / 15
+            height: buttonColumn.height / 5
             text: "Restart"
             onClicked: restartPage.restartClicked(yesButton.checked)
         }
@@ -94,7 +95,7 @@ Item {
             id: mainMenuButton
             anchors.horizontalCenter: buttonColumn.horizontalCenter
             width: restartPage.width / 2
-            height: restartPage.height / 15
+            height: buttonColumn.height / 5
             text: "Main menu"
             onClicked: restartPage.homeClicked()
         }
@@ -102,7 +103,7 @@ Item {
             id: exitButton
             anchors.horizontalCenter: buttonColumn.horizontalCenter
             width: restartPage.width / 2
-            height: restartPage.height / 15
+            height: buttonColumn.height / 5
             text: "Exit"
             onClicked: restartPage.exitClicked()
         }

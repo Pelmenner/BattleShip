@@ -49,120 +49,23 @@ Item{
         rows: 10 + isHealthBarShown
         anchors{
             top: nameBox.bottom; bottom: field.bottom;
-            left:nameBox.left; right: nameBox.right}
+            left:nameBox.left; right: nameBox.right
+        }
 
         columnSpacing: 0
         rowSpacing: 0
 
-        Cell{ indexX: 0; indexY: 0; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 0; indexY: 1; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 0; indexY: 2; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 0; indexY: 3; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 0; indexY: 4; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 0; indexY: 5; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 0; indexY: 6; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 0; indexY: 7; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 0; indexY: 8; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 0; indexY: 9; Layout.fillHeight: true; Layout.fillWidth: true}
+        Repeater{ // much slower than 100 hard-coded
+            id: rowRepeater
+            model: 10
 
-        Cell{ indexX: 1; indexY: 0; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 1; indexY: 1; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 1; indexY: 2; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 1; indexY: 3; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 1; indexY: 4; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 1; indexY: 5; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 1; indexY: 6; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 1; indexY: 7; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 1; indexY: 8; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 1; indexY: 9; Layout.fillHeight: true; Layout.fillWidth: true}
-
-        Cell{ indexX: 2; indexY: 0; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 2; indexY: 1; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 2; indexY: 2; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 2; indexY: 3; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 2; indexY: 4; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 2; indexY: 5; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 2; indexY: 6; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 2; indexY: 7; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 2; indexY: 8; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 2; indexY: 9; Layout.fillHeight: true; Layout.fillWidth: true}
-
-        Cell{ indexX: 3; indexY: 0; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 3; indexY: 1; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 3; indexY: 2; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 3; indexY: 3; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 3; indexY: 4; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 3; indexY: 5; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 3; indexY: 6; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 3; indexY: 7; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 3; indexY: 8; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 3; indexY: 9; Layout.fillHeight: true; Layout.fillWidth: true}
-
-        Cell{ indexX: 4; indexY: 0; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 4; indexY: 1; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 4; indexY: 2; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 4; indexY: 3; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 4; indexY: 4; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 4; indexY: 5; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 4; indexY: 6; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 4; indexY: 7; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 4; indexY: 8; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 4; indexY: 9; Layout.fillHeight: true; Layout.fillWidth: true}
-
-        Cell{ indexX: 5; indexY: 0; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 5; indexY: 1; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 5; indexY: 2; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 5; indexY: 3; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 5; indexY: 4; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 5; indexY: 5; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 5; indexY: 6; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 5; indexY: 7; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 5; indexY: 8; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 5; indexY: 9; Layout.fillHeight: true; Layout.fillWidth: true}
-
-        Cell{ indexX: 6; indexY: 0; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 6; indexY: 1; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 6; indexY: 2; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 6; indexY: 3; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 6; indexY: 4; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 6; indexY: 5; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 6; indexY: 6; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 6; indexY: 7; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 6; indexY: 8; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 6; indexY: 9; Layout.fillHeight: true; Layout.fillWidth: true}
-
-        Cell{ indexX: 7; indexY: 0; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 7; indexY: 1; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 7; indexY: 2; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 7; indexY: 3; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 7; indexY: 4; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 7; indexY: 5; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 7; indexY: 6; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 7; indexY: 7; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 7; indexY: 8; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 7; indexY: 9; Layout.fillHeight: true; Layout.fillWidth: true}
-
-        Cell{ indexX: 8; indexY: 0; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 8; indexY: 1; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 8; indexY: 2; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 8; indexY: 3; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 8; indexY: 4; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 8; indexY: 5; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 8; indexY: 6; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 8; indexY: 7; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 8; indexY: 8; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 8; indexY: 9; Layout.fillHeight: true; Layout.fillWidth: true}
-
-        Cell{ indexX: 9; indexY: 0; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 9; indexY: 1; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 9; indexY: 2; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 9; indexY: 3; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 9; indexY: 4; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 9; indexY: 5; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 9; indexY: 6; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 9; indexY: 7; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 9; indexY: 8; Layout.fillHeight: true; Layout.fillWidth: true}
-        Cell{ indexX: 9; indexY: 9; Layout.fillHeight: true; Layout.fillWidth: true}
+            Repeater{
+                id: columnRepeater
+                property int rowIndex: index
+                model: 10
+                Cell{ indexX: columnRepeater.rowIndex; indexY: index; Layout.fillHeight: true; Layout.fillWidth: true}
+            }
+        }
 
         ProgressBar{
             id: healthBar
