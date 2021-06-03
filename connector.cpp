@@ -42,20 +42,47 @@ void Connector::sendMove(const int x, const int y)
     message["type"] = QStringLiteral("move");
 	message["x"] = x;
 	message["y"] = y;
-	clientStream << QJsonDocument(message).toJson(QJsonDocument::Compact);
+    clientStream << QJsonDocument(message).toJson(QJsonDocument::Compact);
+}
+
+void Connector::createRoom()
+{
+    QDataStream clientStream(m_clientSocket);
+    clientStream.setVersion(QDataStream::Qt_5_7);
+    QJsonObject message;
+    message["type"] = QStringLiteral("create");
+    clientStream << QJsonDocument(message).toJson(QJsonDocument::Compact);
+}
+
+void Connector::joinRoom(int roomId)
+{
+    QDataStream clientStream(m_clientSocket);
+    clientStream.setVersion(QDataStream::Qt_5_7);
+    QJsonObject message;
+    message["type"] = QStringLiteral("join");
+    message["roomId"] = roomId;
+    clientStream << QJsonDocument(message).toJson(QJsonDocument::Compact);
 }
 
 void Connector::disconnectFromHost()
 {
 	m_clientSocket->disconnectFromHost();
 }
-void Connector::connectToServer(const QHostAddress& address, quint16 port)
+
+void Connector::connectToServer(const QHostAddress& address, quint16 port, const QString& playerName)
 {
 	m_clientSocket->connectToHost(address, port);
 	if (m_clientSocket->waitForConnected()) // putting 1 as parameter isn't reasonable, using default 3000ms value
 		qDebug("Connected");
 	else
 		qDebug("Could not connect to server");
+
+    QDataStream clientStream(m_clientSocket);
+    clientStream.setVersion(QDataStream::Qt_5_7);
+    QJsonObject message;
+    message["type"] = QStringLiteral("name");
+    message["name"] = playerName;
+    clientStream << QJsonDocument(message).toJson(QJsonDocument::Compact);
 }
 
 void Connector::jsonReceived(const QJsonObject& docObj)
@@ -117,6 +144,11 @@ void Connector::jsonReceived(const QJsonObject& docObj)
         qDebug("Game ended");
         QJsonValue isWinner = docObj.value(QString("isWinner"));
         emit gameFinished(isWinner.toBool());
+    }
+    else if (typeVal == "roomCreated")
+    {
+        QJsonValue roomId = docObj.value(QString("roomId"));
+        emit roomIdRecieved(roomId.toInt());
     }
 }
 

@@ -18,8 +18,7 @@ SOURCES += \
         connector.cpp \
         field.cpp \
         game.cpp \
-        main.cpp \
-        player.cpp
+        main.cpp
 
 RESOURCES += qml.qrc
 
@@ -51,8 +50,7 @@ HEADERS += \
     cell.h \
     connector.h \
     field.h \
-    game.h \
-    player.h
+    game.h
 
 DISTFILES += \
     Android/res/values/styles.xml \

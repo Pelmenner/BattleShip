@@ -13,9 +13,11 @@ public:
     void lookForOpponent();
     void sendField(const QString& fieldStr);
     void sendMove(const int x, const int y);
+    void createRoom();
+    void joinRoom(int roomId);
 
 public slots:
-    void connectToServer(const QHostAddress &address, quint16 port);
+    void connectToServer(const QHostAddress &address, quint16 port, const QString& playerName);
     //void login(const QString &userName);
     void disconnectFromHost();
 
@@ -34,6 +36,7 @@ signals:
     void gotTurn(int isCurrent);
     void gotField(const QString& cellString, int player);
     void gameFinished(bool isWinner);
+    void roomIdRecieved(int roomId);
 
 private:
     QTcpSocket *m_clientSocket;

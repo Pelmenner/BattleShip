@@ -12,6 +12,7 @@ class Game : public QObject
     Q_PROPERTY(Field* curField READ getCurField NOTIFY curFieldChanged)
     Q_PROPERTY(Field* firstField READ getFirstField NOTIFY firstFieldChanged)
     Q_PROPERTY(Field* secondField READ getSecondField NOTIFY secondFieldChanged)
+    Q_PROPERTY(QString waitingInfo READ getWaitingInfo NOTIFY waitingInfoChanged)
 
 public:
     explicit Game(QObject *parent = nullptr);
@@ -19,6 +20,7 @@ public:
     Field *getCurField();
     Field *getFirstField();
     Field *getSecondField();
+    QString getWaitingInfo();
 
     void setNames(const QString &name1, const QString &name2);
 
@@ -36,11 +38,13 @@ signals:
     void returnedHome();
     void opponentSelectionStarted();
     void waiting();
+    void waitingInfoChanged();
 
 public slots:
     void startInitialization();
     void setTurn(int isCurrent);
 
+    Q_INVOKABLE void returnHome();
 private:
     enum class GameState {begin, initPlayer1, initPlayer2, play, connect};
     GameState gameState = GameState::begin;
@@ -59,6 +63,7 @@ private:
     QObject* restartPage;
     QObject* opponentSelectPage;
 
+    QString waitingInfo;
     Field *field1, *field2, *curField;
     Connector *connector;
     QPoint bufPos;
@@ -70,7 +75,8 @@ private:
     void playLocal();
     void endLocalGame();
     void startOpponentSelection();
-    void connectToServer(const QString& serverAddress, const QString& serverPort);
+    void connectToServer(const QString& serverAddress,
+                         const QString& serverPort, const QString& playerName);
 
 private slots:
     void playOnline();
@@ -82,7 +88,6 @@ private slots:
     void clearClicked();
     void randomClicked();
     void exitClicked();
-    void homeClicked();
     void playClicked(bool online);
     void gameRestarted(bool saveNames);
 
@@ -97,14 +102,16 @@ private slots:
     void opponentSelectPageLoaded();
     void waitingPageLoaded();
 
-    void randomOpponentClicked(const QString& serverAddress, const QString& serverPort);
-    void friendOpponentClicked(const QString& serverAddress, const QString& serverPort);
+    void randomOpponentClicked(const QString& serverAddress, const QString& serverPort, const QString& playerName);
+    void createRoomClicked(const QString& serverAddress, const QString& serverPort, const QString& playerName);
+    void joinRoomClicked(const QString& serverAddress, const QString& serverPort, const QString& playerName, const QString& roomId);
 
     void messageReceived(const QString &sender, const QString &text);
     void connectionError(const QString& error);
 
     void fieldRecieved(const QString& cellString, int player);
     void onlineGameFinished(bool isWinner);
+    void changeWaitingInfo(const QString& info);
 };
 
 #endif // GAME_H

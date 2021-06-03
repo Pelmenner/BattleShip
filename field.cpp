@@ -1,8 +1,6 @@
 #include "field.h"
 
-#include <QColor>
 #include <QTime>
-#include <QPropertyAnimation>
 
 Field::Field(QObject *parent) : QObject(parent), filled(false), lost(false)
 {    

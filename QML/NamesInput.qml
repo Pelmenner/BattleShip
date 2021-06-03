@@ -11,6 +11,13 @@ Item {
     property string name1: player1Input.text
     property string name2: player2Input.text
 
+    Keys.onReleased: {
+        if (event.key === Qt.Key_Back) {
+            backend.returnHome();
+            event.accepted = true
+        }
+    }
+
     Text{
         id: player1Text
 

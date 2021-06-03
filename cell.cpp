@@ -1,10 +1,6 @@
 #include "cell.h"
 
-#include <QMouseEvent>
-#include <QCursor>
 #include <QDebug>
-#include <QMap>
-#include <QColor>
 
 Cell::Cell(QObject *parent, int x, int y) :
     QObject(parent), x(x), y(y), state(State::Unknown)

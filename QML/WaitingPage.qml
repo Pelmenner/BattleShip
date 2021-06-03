@@ -20,4 +20,13 @@ Item {
         anchors.bottom: busyIndicator.top
         anchors.bottomMargin: 20
     }
+
+    Text {
+        id: info
+        text: backend.waitingInfo
+        color: "white"
+        anchors.horizontalCenter: waitingPage.horizontalCenter
+        anchors.top: busyIndicator.bottom
+        anchors.bottomMargin: 20
+    }
 }
