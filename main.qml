@@ -6,7 +6,6 @@ import QtQuick.Controls.Material 2.0
 import "QML"
 
 Window {
-    color: "#252525"
     id: mainWindow
     objectName: "mainWindow"
     visible: true
