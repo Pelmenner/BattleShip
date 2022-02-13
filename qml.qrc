@@ -1,0 +1,22 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>QML/Cell.qml</file>
+        <file>QML/Field.qml</file>
+        <file>QML/FieldInitializer.qml</file>
+        <file>QML/Game.qml</file>
+        <file>data/waves.png</file>
+        <file>QML/HomePage.qml</file>
+        <file>QML/ShipCounter.qml</file>
+        <file>QML/ShipCounterRow.qml</file>
+        <file>QML/NamesInput.qml</file>
+        <file>data/ship1.png</file>
+        <file>data/ship2.png</file>
+        <file>data/ship3.png</file>
+        <file>data/ship4.png</file>
+        <file>QML/Restart.qml</file>
+        <file>data/Quando-Regular.ttf</file>
+        <file>QML/OpponentSelectPage.qml</file>
+        <file>QML/WaitingPage.qml</file>
+    </qresource>
+</RCC>
