@@ -26,24 +26,8 @@ int Field::checkHit(const QPoint &position) const
 {
     for (int i = 0; i < ships.size(); ++i)
     {
-        if (ships[i].direction == ship::Direction::vertical)
-        {
-            if (position.y() != ships[i].pos.y())
-                continue;
-            if (position.x() < ships[i].pos.x() || position.x() >= ships[i].pos.x() + ships[i].length)
-                continue;
-
+        if (ships[i].containsCell(position))
             return i;
-        }
-        else
-        {
-            if (position.x() != ships[i].pos.x())
-                continue;
-            if (position.y() < ships[i].pos.y() || position.y() >= ships[i].pos.y() + ships[i].length)
-                continue;
-
-            return i;
-        }
     }
     return -1;
 }
@@ -72,23 +56,35 @@ void Field::showAndSurroundKilled(int index)
 
 void Field::getNeighbours(QPoint pos, QVector<QPoint> &ans)
 {
-    // there should be a way to do it easer
-    if (pos.x() > 0 && pos.y() > 0)
-        ans.push_back({pos.x() - 1, pos.y() - 1});
-    if (pos.x() > 0)
-        ans.push_back({pos.x() - 1, pos.y()});
-    if (pos.x() > 0 && pos.y() < 9)
-        ans.push_back({pos.x() - 1, pos.y() + 1});
-    if (pos.y() > 0)
-        ans.push_back({pos.x(), pos.y() - 1});
-    if (pos.y() > 0 && pos.x() < 9)
-        ans.push_back({pos.x() + 1, pos.y() - 1});
-    if (pos.x() < 9 && pos.y() < 9)
-        ans.push_back({pos.x() + 1, pos.y() + 1});
-    if (pos.x() < 9)
-        ans.push_back({pos.x() + 1, pos.y()});
-    if (pos.y() < 9)
-        ans.push_back({pos.x(), pos.y() + 1});
+    for (int dx = -1; dx <= 1; ++dx)
+    {
+        for (int dy = -1; dy <= 1; ++dy)
+        {
+            const int x = pos.x() + dx;
+            const int y = pos.y() + dy;
+            if (x >= 0 && y >= 0 && x < 10 && y < 10 && (dx || dy))
+                ans.emplace_back(x, y);
+        }
+    }
+}
+
+bool Field::ship::containsCell(const QPoint &cell) const
+{
+    if (direction == ship::Direction::vertical)
+    {
+        if (cell.y() != this->pos.y())
+            return false;
+        if (cell.x() < this->pos.x() || cell.x() > this->pos.x() + this->length - 1)
+            return false;
+    }
+    else
+    {
+        if (cell.x() != this->pos.x())
+            return false;
+        if (cell.y() < this->pos.y() || cell.y() > this->pos.y() + this->length - 1)
+            return false;
+    }
+    return true;
 }
 
 int Field::getTotalHealth() const
@@ -107,27 +103,10 @@ bool Field::erase(QPoint pos)
     bool found = false;
     for (int i = 0; i < ships.size(); ++i)
     {
-        if (ships[i].direction == ship::Direction::vertical)
+        if (ships[i].containsCell(pos))
         {
-            if (pos.y() != ships[i].pos.y())
-                continue;
-            if (pos.x() < ships[i].pos.x() || pos.x() > ships[i].pos.x() + ships[i].length - 1)
-                continue;
-
             count_ships[ships[i].length - 1]--;
-            ships.erase(ships.begin() + i);
-            found = true;
-            break;
-        }
-        else
-        {
-            if (pos.x() != ships[i].pos.x())
-                continue;
-            if (pos.y() < ships[i].pos.y() || pos.y() > ships[i].pos.y() + ships[i].length - 1)
-                continue;
-
-            count_ships[ships[i].length - 1]--;
-            ships.erase(ships.begin() + i);
+            ships.erase(ships.cbegin() + i);
             found = true;
             break;
         }
@@ -231,6 +210,7 @@ bool Field::hasLost() const
     return true;
 }
 
+// TODO: needs refactoring
 bool Field::addShip(QPoint begin, QPoint end)
 {
     if (begin.x() > end.x() || begin.y() > end.y())

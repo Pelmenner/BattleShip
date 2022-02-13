@@ -33,6 +33,7 @@ public:
 
         ship(QPoint start, QPoint end);
         ship() : length(0), direction(Direction::vertical), health(0){};
+        bool containsCell(const QPoint& cell) const;
     };
 
     enum class MoveResult
