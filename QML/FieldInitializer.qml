@@ -11,6 +11,12 @@ Item {
 
     property bool landscape: width > height
 
+    Component.onCompleted: {
+        okButtonClicked.connect(backend.okClicked)
+        randomButtonClicked.connect(backend.randomClicked)
+        clearButtonClicked.connect(backend.clearClicked)
+    }
+
     Field {
         id:field
 
@@ -18,6 +24,11 @@ Item {
         width: fieldInitializer.landscape? Math.min(fieldInitializer.height / 1.1, fieldInitializer.width / 1.5 - anchors.leftMargin * 2) :
                                            Math.min(fieldInitializer.width - anchors.leftMargin * 2, fieldInitializer.height / 1.5 / 1.1 - 10)
         height: width * 1.1
+
+        Component.onCompleted: {
+            cellClicked.connect(backend.fieldInitClicked)
+            cellRClicked.connect(backend.fieldInitRClicked)
+        }
     }
 
     Column{

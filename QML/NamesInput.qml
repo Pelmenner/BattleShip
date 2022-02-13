@@ -5,11 +5,13 @@ import QtQuick.Controls.Material 2.0
 Item {
     id: namesInput
 
-    signal completed()
+    signal completed(string name1, string name2)
 
     property bool landscape: width > height
     property string name1: player1Input.text
     property string name2: player2Input.text
+
+    Component.onCompleted: completed.connect(backend.namesInputed);
 
     Keys.onReleased: {
         if (event.key === Qt.Key_Back) {
@@ -150,7 +152,7 @@ Item {
         width: namesInput.width / 4
         height: namesInput.landscape? namesInput.height / 10 : namesInput.height / 15
         enabled: warningText.opacity == 0
-        onClicked: namesInput.completed()
+        onClicked: namesInput.completed(player1Input.text, player2Input.text)
         text: "OK"
     }
 }

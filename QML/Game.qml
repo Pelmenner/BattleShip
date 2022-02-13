@@ -9,6 +9,8 @@ Item {
 
     property bool landscape: width > height
 
+    Component.onCompleted: finished.connect(backend.gameFinished);
+
     Field{
         id: field1
         objectName: "field1"

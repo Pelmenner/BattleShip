@@ -138,6 +138,7 @@ Window {
             changeLoaderComponent(init)
         }
         onGameClosed: {
+            console.log('game closed')
             changeLoaderComponent(restartPage)
         }
         onReturnedHome: {

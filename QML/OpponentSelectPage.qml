@@ -9,6 +9,12 @@ Item {
     signal createClicked(string serverAddress, string serverPort, string playerName)
     signal joinClicked(string serverAddress, string serverPort, string playerName, string room);
 
+    Component.onCompleted: {
+        randomClicked.connect(backend.randomOpponentClicked)
+        createClicked.connect(backend.createRoomClicked)
+        joinClicked.connect(backend.joinRoomClicked)
+    }
+
     Keys.onReleased: {
         if (event.key === Qt.Key_Back) {
             backend.returnHome();

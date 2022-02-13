@@ -12,6 +12,12 @@ Item {
     signal homeClicked()
     signal exitClicked()
 
+    Component.onCompleted: {
+        restartClicked.connect(backend.restartGame)
+        homeClicked.connect(backend.returnHome)
+        exitClicked.connect(backend.exit)
+    }
+
     Text{
         id: restartText
         anchors.horizontalCenter: restartPage.horizontalCenter

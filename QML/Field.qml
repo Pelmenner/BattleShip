@@ -15,6 +15,8 @@ Item{
     signal cellClicked(int x, int y)
     signal cellRClicked(int x, int y)
 
+    onBackendFieldChanged: cellClicked.connect(backendField.clickedEvent)
+
     width: Math.min(parent.height / 1.1, (parent.width - anchors.leftMargin - anchors.rightMargin))
     height: Math.min(parent.height, (parent.width - anchors.leftMargin - anchors.rightMargin) * 1.1)
 

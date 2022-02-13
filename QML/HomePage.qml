@@ -5,11 +5,12 @@ Item {
     id: homePage
 
     signal playClicked(bool online)
+    signal homePageLoaded()
 
-    Column{
-         anchors.verticalCenter: homePage.verticalCenter
-         anchors.horizontalCenter: homePage.horizontalCenter
-        Button{
+    Column {
+        anchors.verticalCenter: homePage.verticalCenter
+        anchors.horizontalCenter: homePage.horizontalCenter
+        Button {
             id: playLocalButton
             text: "Play local"
             width: playOnlineButton.width
@@ -17,11 +18,12 @@ Item {
             onClicked: homePage.playClicked(false)
         }
 
-        Button{
+        Button {
             id: playOnlineButton
             text: "Play online"
 
             onClicked: homePage.playClicked(true)
         }
     }
+    Component.onCompleted: playClicked.connect(backend.playClicked)
 }
