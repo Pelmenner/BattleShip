@@ -128,26 +128,25 @@ Window {
     Connections {
         target: backend
 
-        onNameInputStarted: {
+        function onNameInputStarted() {
             changeLoaderComponent(namesInput)
         }
-        onLocalGameStarted: {
+        function onLocalGameStarted() {
             changeLoaderComponent(play)
         }
-        onInitializationStarted: {
+        function onInitializationStarted() {
             changeLoaderComponent(init)
         }
-        onGameClosed: {
-            console.log('game closed')
+        function onGameClosed() {
             changeLoaderComponent(restartPage)
         }
-        onReturnedHome: {
+        function onReturnedHome() {
             changeLoaderComponent(homePage)
         }
-        onOpponentSelectionStarted: {
+        function onOpponentSelectionStarted() {
             changeLoaderComponent(opponentSelectPage)
         }
-        onWaiting: {
+        function onWaiting() {
             changeLoaderComponent(waitingPage)
         }
     }

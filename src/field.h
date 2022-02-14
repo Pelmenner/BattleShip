@@ -106,8 +106,8 @@ private:
     bool filled;
     bool lost;
 
-    int checkHit(const QPoint &position) const;
-    void showAndSurroundKilled(int index);
+    std::optional<int> checkHit(const QPoint &position) const;
+    void showAndSurroundKilled(const Field::ship& killedShip);
     void getNeighbours(QPoint pos, QVector<QPoint> &ans);
 };
 

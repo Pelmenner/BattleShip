@@ -15,29 +15,29 @@ Field::Field(QObject *parent) : QObject(parent), filled(false), lost(false)
 }
 
 Field::Field(const Field &f) : cells(f.cells), cellStates(f.cellStates),
-                               count_ships(f.count_ships), name(f.name), filled(f.filled), lost(f.lost) {}
+    count_ships(f.count_ships), name(f.name), filled(f.filled), lost(f.lost) {}
 
 Cell *Field::getCell(int x, int y)
 {
     return cells[x][y];
 }
 
-int Field::checkHit(const QPoint &position) const
+std::optional<int> Field::checkHit(const QPoint &position) const
 {
-    for (int i = 0; i < ships.size(); ++i)
+    for (qsizetype i = 0; i < ships.size(); ++i)
     {
         if (ships[i].containsCell(position))
             return i;
     }
-    return -1;
+    return {};
 }
 
-void Field::showAndSurroundKilled(int index)
+void Field::showAndSurroundKilled(const Field::ship& killedShip)
 {
-    QPoint start = ships[index].pos;
+    QPoint start = killedShip.pos;
     QPoint end;
-    end.rx() = start.x() + ((static_cast<int>(ships[index].direction) + 1) % 2) * ships[index].length;
-    end.ry() = start.y() + static_cast<int>(ships[index].direction) * ships[index].length;
+    end.rx() = start.x() + ((static_cast<int>(killedShip.direction) + 1) % 2) * killedShip.length;
+    end.ry() = start.y() + static_cast<int>(killedShip.direction) * killedShip.length;
 
     QPoint curPos = start;
     QVector<QPoint> cellsNearKilled;
@@ -45,8 +45,8 @@ void Field::showAndSurroundKilled(int index)
     {
         changeCellState(curPos, Cell::State::Hit);
         getNeighbours(curPos, cellsNearKilled);
-        curPos.rx() += (static_cast<int>(ships[index].direction) + 1) % 2;
-        curPos.ry() += static_cast<int>(ships[index].direction) % 2;
+        curPos.rx() += (static_cast<int>(killedShip.direction) + 1) % 2;
+        curPos.ry() += static_cast<int>(killedShip.direction) % 2;
     }
 
     for (const auto &coordinates : cellsNearKilled)
@@ -101,7 +101,7 @@ int Field::getTotalHealth() const
 bool Field::erase(QPoint pos)
 {
     bool found = false;
-    for (int i = 0; i < ships.size(); ++i)
+    for (qsizetype i = 0; i < ships.size(); ++i)
     {
         if (ships[i].containsCell(pos))
         {
@@ -135,8 +135,8 @@ void Field::updateCells()
         for (int j = 0; j < 10; ++j)
             changeCellState(i, j, Cell::State::Unknown);
 
-    for (int i = 0; i < ships.size(); i++)
-        showAndSurroundKilled(i);
+    for (const auto& ship : ships)
+        showAndSurroundKilled(ship);
 }
 
 void Field::showAlive()
@@ -181,24 +181,24 @@ Field::MoveResult Field::hit(const QPoint &position)
     if (cellStates[position.x()][position.y()] != Cell::State::Unknown)
         return MoveResult::WrongMove;
 
-    int res = checkHit(position);
+    std::optional<int> res = checkHit(position);
     changeCellState(position, Cell::State::Checked);
-    if (res == -1)
+    if (!res)
         return MoveResult::EmptyCell;
 
     changeCellState(position, Cell::State::Hit);
-    --ships[res].health;
+    --ships[res.value()].health;
     emit healthChanged();
 
-    if (ships[res].health == 0)
-        showAndSurroundKilled(res);
+    if (ships[res.value()].health == 0)
+        showAndSurroundKilled(ships[res.value()]);
     return MoveResult::Damaged;
 }
 
 int Field::getShipNum() const
 {
     return count_ships[0] + count_ships[1] +
-           count_ships[2] + count_ships[3];
+            count_ships[2] + count_ships[3];
 }
 
 bool Field::hasLost() const

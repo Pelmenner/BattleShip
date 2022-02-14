@@ -15,10 +15,10 @@ public:
     void sendMove(const int x, const int y);
     void createRoom();
     void joinRoom(int roomId);
+    void sendMessage(const QList<QPair<QString, QJsonValue>>& values);
 
 public slots:
     void connectToServer(const QHostAddress &address, quint16 port, const QString &playerName);
-    //void login(const QString &userName);
     void disconnectFromHost();
 
 private slots:

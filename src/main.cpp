@@ -17,8 +17,6 @@
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-
     QGuiApplication app(argc, argv);
     QQuickStyle::setStyle("Material");
 
@@ -38,13 +36,13 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_ANDROID
     // set statusbar color
     QtAndroid::runOnAndroidThread([]()
-                                  {
-                                      QAndroidJniObject window = QtAndroid::androidActivity().callObjectMethod("getWindow", "()Landroid/view/Window;");
-                                      window.callMethod<void>("addFlags", "(I)V", 0x80000000);
-                                      window.callMethod<void>("clearFlags", "(I)V", 0x04000000);
-                                      window.callMethod<void>("setStatusBarColor", "(I)V", 0xff252525);
-                                      QtAndroid::hideSplashScreen(800);
-                                  });
+    {
+        QAndroidJniObject window = QtAndroid::androidActivity().callObjectMethod("getWindow", "()Landroid/view/Window;");
+        window.callMethod<void>("addFlags", "(I)V", 0x80000000);
+        window.callMethod<void>("clearFlags", "(I)V", 0x04000000);
+        window.callMethod<void>("setStatusBarColor", "(I)V", 0xff252525);
+        QtAndroid::hideSplashScreen(800);
+    });
 #endif // Q_OS_ANDROID
 
     Game game;

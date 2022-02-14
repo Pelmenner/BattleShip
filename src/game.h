@@ -71,7 +71,6 @@ private:
     bool drawing = false;
 
     QQmlApplicationEngine engine;
-
     QString waitingInfo;
     Field *field1, *field2, *curField;
     Connector *connector;
@@ -84,8 +83,7 @@ private:
     void playLocal();
     void endLocalGame();
     void startOpponentSelection();
-    void connectToServer(const QString& serverAddress,
-                         const QString& serverPort, const QString& playerName);
+    void connectToServer(const QString& serverAddress, const QString& serverPort, const QString& playerName);
 
     void switchField();
 
