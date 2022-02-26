@@ -21,6 +21,8 @@ set(PROJECT_SOURCES
         src/field.cpp src/field.h
         src/game.cpp src/game.h
         qml.qrc
+        fonts.qrc
+        images.qrc
 )
 
 # Resources:

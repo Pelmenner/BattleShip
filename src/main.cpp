@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     QQuickStyle::setStyle("Material");
 
-    int id = QFontDatabase::addApplicationFont(":/data/Quando-Regular.ttf");
+    int id = QFontDatabase::addApplicationFont(":/res/Quando-Regular.ttf");
     if (QFontDatabase::applicationFontFamilies(id).empty())
     {
         qDebug("Could not load font Quando-Regular (cpp)");

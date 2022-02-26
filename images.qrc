@@ -1,0 +1,10 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <file>res/ship1.png</file>
+        <file>res/ship2.png</file>
+        <file>res/ship3.png</file>
+        <file>res/ship4.png</file>
+        <file>res/waves.png</file>
+    </qresource>
+</RCC>

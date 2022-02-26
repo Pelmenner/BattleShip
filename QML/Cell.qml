@@ -31,7 +31,7 @@ Rectangle{
 
     BorderImage{
         anchors.fill: parent
-        source: '/data/waves.png'
+        source: 'qrc:///res/waves.png'
         visible: field.backendField.getCell(indexX, indexY).state == Cell.Unknown
     }
 

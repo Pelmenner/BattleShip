@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>data/Quando-Regular.ttf</file>
+        <file>res/Quando-Regular.ttf</file>
     </qresource>
 </RCC>

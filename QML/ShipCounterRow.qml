@@ -39,7 +39,7 @@ Item {
             fillMode: Image.PreserveAspectFit
             horizontalAlignment: Image.AlignHCenter
             verticalAlignment: Image.AlignVCenter
-            source: "qrc:///data/ship" + Number(4 - index).toString() + ".png"
+            source: "qrc:///res/ship" + Number(4 - index).toString() + ".png"
         }
     }
 
