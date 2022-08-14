@@ -1,11 +1,13 @@
-import QtQuick 2.0
+import QtQuick 2.15
 import QtQuick.Controls.Material 2.0
 
 Item {
     id: row
 
-    property int index: 0
-    opacity: rowText.text == "x0" ? 0.5 : 1
+    required property int length
+    required property int count
+
+    opacity: count === 5 - length? 0.5 : 1
 
     Text{
         id: rowText
@@ -15,8 +17,8 @@ Item {
             leftMargin: row.width / 10
             top: row.top
             bottom: row.bottom
-        }    
-        text: "x" + (index + 1 - backend.curField.shipCount[3 - index])
+        }
+        text: "x" + (5 - length - count)
         color: Material.foreground
         font.pointSize: row.height / 4
         verticalAlignment: Text.AlignVCenter
@@ -31,7 +33,7 @@ Item {
             top: row.top;
             leftMargin: row.width / 10
         }
-        width : (4 - index) * Math.min(height, (row.width - rowText.width - rowText.anchors.leftMargin - anchors.leftMargin) / 4)
+        width : length * Math.min(height, (row.width - rowText.width - rowText.anchors.leftMargin - anchors.leftMargin) / 4)
 
         Image {
             id: image
@@ -39,12 +41,13 @@ Item {
             fillMode: Image.PreserveAspectFit
             horizontalAlignment: Image.AlignHCenter
             verticalAlignment: Image.AlignVCenter
-            source: "qrc:///res/ship" + Number(4 - index).toString() + ".png"
+            source: "qrc:///res/ship" + length + ".png"
+
         }
     }
 
     Behavior on opacity{
-        ColorAnimation {
+        OpacityAnimator {
             duration: 200
         }
     }

@@ -5,7 +5,6 @@
 
 Field::Field(QObject *parent) : QObject(parent), filled(false), lost(false)
 {
-    count_ships.resize(4);
     cells.fill(QVector<Cell *>(10), 10);
     cellStates.fill(QVector<Cell::State>(10, Cell::State::Unknown), 10);
 
@@ -15,7 +14,7 @@ Field::Field(QObject *parent) : QObject(parent), filled(false), lost(false)
 }
 
 Field::Field(const Field &f) : cells(f.cells), cellStates(f.cellStates),
-    count_ships(f.count_ships), name(f.name), filled(f.filled), lost(f.lost) {}
+    name(f.name), filled(f.filled), lost(f.lost) {shipCounter.updateFrom(f.shipCounter);}
 
 Cell *Field::getCell(int x, int y)
 {
@@ -105,14 +104,13 @@ bool Field::erase(QPoint pos)
     {
         if (ships[i].containsCell(pos))
         {
-            count_ships[ships[i].length - 1]--;
+            shipCounter.erase(ships[i].length);
             ships.erase(ships.cbegin() + i);
             found = true;
             break;
         }
     }
     updateCells();
-    emit shipCountChanged();
     return found;
 }
 
@@ -197,8 +195,7 @@ Field::MoveResult Field::hit(const QPoint &position)
 
 int Field::getShipNum() const
 {
-    return count_ships[0] + count_ships[1] +
-            count_ships[2] + count_ships[3];
+    return shipCounter.total();
 }
 
 bool Field::hasLost() const
@@ -223,7 +220,7 @@ bool Field::addShip(QPoint begin, QPoint end)
 
     if (length > 4)
         return false;
-    if (count_ships[length - 1] == 4 - length + 1)
+    if (shipCounter.get(length) == 4 - length + 1)
         return false;
 
     QPoint curPos = begin;
@@ -238,7 +235,7 @@ bool Field::addShip(QPoint begin, QPoint end)
         return false;
 
     ships.push_back(ship(begin, end));
-    count_ships[length - 1]++;
+    shipCounter.add(length);
 
     curPos = begin;
     QVector<QPoint> currCells;
@@ -256,7 +253,6 @@ bool Field::addShip(QPoint begin, QPoint end)
         if (cellStates[coordinates.x()][coordinates.y()] == Cell::State::Unknown)
             changeCellState(coordinates, Cell::State::AutoChecked);
 
-    emit shipCountChanged();
     setFilled(getShipNum() == 10);
 
     return true;
@@ -297,15 +293,13 @@ void Field::RandomFill()
         }
     }
     setFilled(true);
-    emit shipCountChanged();
 }
 
 void Field::DeleteShips()
 {
     ships.clear();
-    count_ships.fill(0, 4);
+    shipCounter.reset();
     clearCells();
-    emit shipCountChanged();
     setFilled(false);
 }
 
@@ -314,14 +308,14 @@ QString Field::getName() const
     return name;
 }
 
-QVector<int> Field::getShipCount()
-{
-    return count_ships;
-}
-
 QVector<Cell::State> &Field::operator[](int index)
 {
     return cellStates[index];
+}
+
+Field::ShipCounter *Field::getShipCounter()
+{
+    return &shipCounter;
 }
 
 Field::ship::ship(QPoint start, QPoint end)
@@ -415,4 +409,66 @@ QString Field::cellsToString() const
         }
     }
     return result;
+}
+
+int Field::ShipCounter::rowCount(const QModelIndex &parent) const
+{
+    return shipCount.size();
+}
+
+QVariant Field::ShipCounter::data(const QModelIndex &index, int role) const
+{
+    if (!index.isValid())
+        return {};
+    int row = index.row();
+    if (role == CounterRoles::Length)
+        return row + 1;
+    else if (role == CounterRoles::Count && row < shipCount.size())
+        return shipCount[row];
+    return {};
+}
+
+void Field::ShipCounter::update(int index, int value)
+{
+    shipCount[index] = value;
+    emit dataChanged(createIndex(index, 0), createIndex(index, 0));
+}
+
+void Field::ShipCounter::erase(int length)
+{
+    update(length - 1, shipCount[length - 1] - 1);
+}
+
+void Field::ShipCounter::add(int length)
+{
+    update(length - 1, shipCount[length - 1] + 1);
+}
+
+void Field::ShipCounter::reset()
+{
+    shipCount.fill(0);
+    emit dataChanged(createIndex(0, 0), createIndex(shipCount.size() - 1, 0));
+}
+
+int Field::ShipCounter::get(int length) const
+{
+    return shipCount[length - 1];
+}
+
+int Field::ShipCounter::total() const
+{
+    return shipCount[0] + shipCount[1] + shipCount[2] + shipCount[3];
+}
+
+void Field::ShipCounter::updateFrom(const ShipCounter &counter)
+{
+    shipCount = counter.shipCount;
+}
+
+QHash<int, QByteArray> Field::ShipCounter::roleNames() const
+{
+    QHash<int, QByteArray> roles;
+    roles[CounterRoles::Length] = "length";
+    roles[CounterRoles::Count] = "count";
+    return roles;
 }
