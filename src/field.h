@@ -16,7 +16,7 @@ class Field : public QObject
     Q_PROPERTY(QString name READ getName NOTIFY nameChanged)
     Q_PROPERTY(bool filled READ isFilled NOTIFY filledChanged)
     Q_PROPERTY(int health READ getTotalHealth NOTIFY healthChanged)
-    Q_PROPERTY(QVector<int> shipCount READ getShipCount NOTIFY shipCountChanged)
+    Q_PROPERTY(ShipCounter* shipCounter READ getShipCounter CONSTANT)
 
 public:
     struct ship
@@ -41,6 +41,29 @@ public:
         WrongMove,
         EmptyCell,
         Damaged
+    };
+
+    class ShipCounter : public QAbstractListModel
+    {
+    public:
+        enum CounterRoles {
+                Length = Qt::UserRole + 1,
+                Count
+            };
+
+        explicit ShipCounter(QObject *parent = nullptr) {shipCount.resize(4);};
+        int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+        QVariant data(const QModelIndex &index, int role) const override;
+        void update(int index, int value);
+        void erase(int length);
+        void add(int length);
+        void reset();
+        int get(int length) const;
+        int total() const;
+        void updateFrom(const ShipCounter&);
+        QHash<int, QByteArray> roleNames() const override;
+    private:
+        QVector<int> shipCount;
     };
 
     explicit Field(QObject *parent = nullptr);
@@ -82,11 +105,10 @@ public:
 
     int getTotalHealth() const;
 
-    // get number of ships given length for each length
-    QVector<int> getShipCount();
-
     //get row of cells
     QVector<Cell::State> &operator[](int index);
+
+    ShipCounter* getShipCounter();
 
 signals:
     void clickedEvent(int, int);
@@ -94,12 +116,11 @@ signals:
     void filledChanged();
     void nameChanged();
     void healthChanged();
-    void shipCountChanged();
 
 private:
     QVector<QVector<Cell *>> cells;
     QVector<QVector<Cell::State>> cellStates;
-    QVector<int> count_ships;
+    ShipCounter shipCounter;
     QVector<ship> ships;
     QString name;
 

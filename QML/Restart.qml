@@ -5,7 +5,7 @@ import QtQuick.Controls.Material 2.0
 Item {
     id: restartPage
 
-    property int fontSize: height / 25
+    property int fontSize: height / 40
     property bool landscape: width > height
 
     signal restartClicked(bool saveNames)

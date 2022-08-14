@@ -7,39 +7,17 @@ Item {
 
     property BackendField backendField: backend.curField
 
-    ColumnLayout {
-        id: columnLayout
+    ListView{
+        id: view
         anchors.fill: parent
+        model: backendField.shipCounter
+        verticalLayoutDirection: ListView.BottomToTop
 
-        ShipCounterRow {
-            id: row1
-            index: 0
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-        }
-
-        ShipCounterRow {
-            id: row2
-            index: 1
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-        }
-
-        ShipCounterRow {
-            id: row3
-            index: 2
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-        }
-
-        ShipCounterRow {
-            id: row4
-            index: 3
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+        delegate: ShipCounterRow {
+            width: view.width
+            height: view.height / view.count
         }
     }
 
-
-
+    Component.onCompleted: console.log(backendField.shipCounter)
 }
